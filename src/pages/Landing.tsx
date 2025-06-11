@@ -4,7 +4,7 @@ import { Navigation } from "@/components/layout/Navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { BookOpen, Users, Award, PresentationChart, FileText, Lightbulb, Shield, ArrowRight } from "lucide-react"
+import { BookOpen, Users, Award, Presentation, FileText, Lightbulb, Shield, ArrowRight } from "lucide-react"
 
 export default function Landing() {
   const features = [
@@ -19,7 +19,7 @@ export default function Landing() {
       description: "Submit and track assignments with easy-to-use interface"
     },
     {
-      icon: PresentationChart,
+      icon: Presentation,
       title: "Progress Tracking",
       description: "Monitor your learning journey and academic performance"
     },
