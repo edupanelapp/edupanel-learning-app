@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { BottomNavigation } from "@/components/ui/bottom-navigation"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +39,7 @@ export function HODLayout() {
   const isActive = (href: string) => location.pathname === href
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -134,6 +135,9 @@ export function HODLayout() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Outlet />
       </main>
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNavigation items={navigation} />
     </div>
   )
 }

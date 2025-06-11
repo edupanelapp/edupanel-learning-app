@@ -22,6 +22,7 @@ import StudentSubjects from "./pages/student/StudentSubjects";
 import StudentAssignments from "./pages/student/StudentAssignments";
 import StudentProjects from "./pages/student/StudentProjects";
 import StudentProgress from "./pages/student/StudentProgress";
+import StudentProfile from "./pages/student/StudentProfile";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/FacultyDashboard";
@@ -30,6 +31,7 @@ import FacultyAssignments from "./pages/faculty/FacultyAssignments";
 import FacultyProjects from "./pages/faculty/FacultyProjects";
 import FacultyStudents from "./pages/faculty/FacultyStudents";
 import FacultyApprovals from "./pages/faculty/FacultyApprovals";
+import FacultyProfile from "./pages/faculty/FacultyProfile";
 
 // HOD Pages
 import HODDashboard from "./pages/hod/HODDashboard";
@@ -38,6 +40,7 @@ import HODSubjects from "./pages/hod/HODSubjects";
 import HODFaculty from "./pages/hod/HODFaculty";
 import HODStudents from "./pages/hod/HODStudents";
 import HODAnnouncements from "./pages/hod/HODAnnouncements";
+import HODProfile from "./pages/hod/HODProfile";
 
 import NotFound from "./pages/NotFound";
 
@@ -69,6 +72,7 @@ const App = () => (
               <Route path="assignments" element={<StudentAssignments />} />
               <Route path="projects" element={<StudentProjects />} />
               <Route path="progress" element={<StudentProgress />} />
+              <Route path="profile" element={<StudentProfile />} />
             </Route>
 
             {/* Faculty Routes */}
@@ -79,6 +83,7 @@ const App = () => (
               <Route path="projects" element={<FacultyProjects />} />
               <Route path="students" element={<FacultyStudents />} />
               <Route path="approvals" element={<FacultyApprovals />} />
+              <Route path="profile" element={<FacultyProfile />} />
             </Route>
 
             {/* HOD Routes */}
@@ -89,6 +94,7 @@ const App = () => (
               <Route path="faculty" element={<HODFaculty />} />
               <Route path="students" element={<HODStudents />} />
               <Route path="announcements" element={<HODAnnouncements />} />
+              <Route path="profile" element={<HODProfile />} />
             </Route>
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
