@@ -1,9 +1,7 @@
-
 import { Link } from "react-router-dom"
 import { Navigation } from "@/components/layout/Navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { BookOpen, Users, Award, Presentation, FileText, Lightbulb, Shield, ArrowRight } from "lucide-react"
 
 export default function Landing() {
@@ -54,7 +52,7 @@ export default function Landing() {
             All your study materials, assignments, and mentorship in one professional platform designed for academic excellence.
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
             <Button size="lg" asChild>
               <Link to="/register?role=student" className="flex items-center">
                 Student Get Started <ArrowRight className="ml-2 h-4 w-4" />
@@ -62,12 +60,6 @@ export default function Landing() {
             </Button>
             <Button variant="outline" size="lg" asChild>
               <Link to="/login?role=student">Student Login</Link>
-            </Button>
-            <Button variant="secondary" size="lg" asChild>
-              <Link to="/register?role=faculty">Teacher Get Started</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/login?role=faculty">Teacher Login</Link>
             </Button>
           </div>
         </div>
@@ -95,61 +87,6 @@ export default function Landing() {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Faculty and HOD Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Faculty Access</CardTitle>
-                <CardDescription>
-                  Create your teaching account and manage your academic responsibilities
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button className="w-full" asChild>
-                  <Link to="/register?role=faculty">Teacher Registration</Link>
-                </Button>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/login?role=faculty">Teacher Login</Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>HOD Access</CardTitle>
-                <CardDescription>
-                  Institutional login for department heads and administrators
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      HOD? Login Here
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>HOD Login</DialogTitle>
-                      <DialogDescription>
-                        You will be redirected to the HOD login page. Only pre-approved institutional credentials are accepted.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-end space-x-2">
-                      <Button asChild>
-                        <Link to="/login?role=hod">Proceed to Login</Link>
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -184,28 +121,16 @@ export default function Landing() {
               <h4 className="font-semibold text-foreground mb-4">Administrative</h4>
               <ul className="space-y-2 text-muted-foreground">
                 <li>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <button className="hover:text-primary">HOD Login</button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>HOD Login</DialogTitle>
-                        <DialogDescription>
-                          Access for department heads with institutional credentials.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <Button asChild>
-                        <Link to="/login?role=hod">Login as HOD</Link>
-                      </Button>
-                    </DialogContent>
-                  </Dialog>
+                  <Link to="/register?role=faculty" className="hover:text-primary">Teacher Registration</Link>
+                </li>
+                <li>
+                  <Link to="/login?role=faculty" className="hover:text-primary">Teacher Login</Link>
+                </li>
+                <li>
+                  <Link to="/login?role=hod" className="hover:text-primary">HOD Login</Link>
                 </li>
               </ul>
             </div>
-          </div>
-          <div className="border-t mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2025 EduPanel Learning Hub. All rights reserved.</p>
           </div>
         </div>
       </footer>
