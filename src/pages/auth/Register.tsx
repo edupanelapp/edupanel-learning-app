@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -21,8 +20,7 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    fullName: "",
-    department: ""
+    fullName: ""
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,8 +52,8 @@ export default function Register() {
       description: "Please complete your profile setup.",
     })
 
-    // Redirect to profile setup
-    navigate(`/profile-setup?role=${role}`)
+    // Redirect to profile setup with email parameter
+    navigate(`/profile-setup?role=${role}&email=${encodeURIComponent(formData.email)}`)
   }
 
   const getRoleTitle = () => {
@@ -82,7 +80,7 @@ export default function Register() {
       <div className="flex justify-between items-center p-4 border-b">
         <Link to="/" className="flex items-center space-x-2">
           <GraduationCap className="h-6 w-6 text-primary" />
-          <span className="font-bold text-primary">EduPanel</span>
+          <span className="font-bold text-primary">EduPanel Learning Hub</span>
         </Link>
         <ThemeToggle />
       </div>
@@ -129,31 +127,12 @@ export default function Register() {
                 />
               </div>
 
-              {(role === "faculty" || role === "student") && (
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="computer-science">Computer Science</SelectItem>
-                      <SelectItem value="information-technology">Information Technology</SelectItem>
-                      <SelectItem value="electronics">Electronics & Communication</SelectItem>
-                      <SelectItem value="mechanical">Mechanical Engineering</SelectItem>
-                      <SelectItem value="civil">Civil Engineering</SelectItem>
-                      <SelectItem value="business-administration">Business Administration</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder="Create a password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required

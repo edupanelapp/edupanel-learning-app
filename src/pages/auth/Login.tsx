@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -71,7 +70,7 @@ export default function Login() {
       <div className="flex justify-between items-center p-4 border-b">
         <Link to="/" className="flex items-center space-x-2">
           <GraduationCap className="h-6 w-6 text-primary" />
-          <span className="font-bold text-primary">EduPanel</span>
+          <span className="font-bold text-primary">EduPanel Learning Hub</span>
         </Link>
         <ThemeToggle />
       </div>
