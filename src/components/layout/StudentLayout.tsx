@@ -1,142 +1,36 @@
-
-import { Link, Outlet, useLocation } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/ThemeToggle"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BottomNavigation } from "@/components/ui/bottom-navigation"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { 
-  GraduationCap, 
-  Home, 
-  BookOpen, 
-  FileText, 
-  Rocket, 
-  TrendingUp, 
-  User,
-  LogOut,
-  Bell
-} from "lucide-react"
+import { Outlet } from "react-router-dom"
+import { BaseLayout } from "./BaseLayout"
+import { navigationConfig } from "@/config/navigation"
+import { useAuth } from "@/hooks/useAuth"
 
 export function StudentLayout() {
-  const location = useLocation()
+  const { user, logout } = useAuth()
 
-  const navigation = [
-    { name: "Dashboard", href: "/student/dashboard", icon: Home },
-    { name: "Subjects", href: "/student/subjects", icon: BookOpen },
-    { name: "Assignments", href: "/student/assignments", icon: FileText },
-    { name: "Projects", href: "/student/projects", icon: Rocket },
-    { name: "Progress", href: "/student/progress", icon: TrendingUp },
-  ]
+  // This would typically come from your auth context/state management
+  const userInfo = {
+    name: user?.name || "Student Name",
+    email: user?.email || "student@example.com",
+    initials: user?.name?.split(' ').map(n => n[0]).join('') || "ST",
+    avatar: user?.avatar
+  }
 
-  const isActive = (href: string) => location.pathname === href
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Logout failed:', error)
+      throw error
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background pb-16 md:pb-0">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/student/dashboard" className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-primary hidden sm:block">EduPanel</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
-              {navigation.map((item) => (
-                <Button
-                  key={item.name}
-                  variant={isActive(item.href) ? "default" : "ghost"}
-                  asChild
-                  className="flex items-center space-x-2"
-                >
-                  <Link to={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                </Button>
-              ))}
-            </nav>
-
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <ThemeToggle />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt="Student" />
-                      <AvatarFallback>ST</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Student Name</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        student@example.com
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/student/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Navigation */}
-      <nav className="md:hidden border-b bg-background">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-1 overflow-x-auto py-2">
-            {navigation.map((item) => (
-              <Button
-                key={item.name}
-                variant={isActive(item.href) ? "default" : "ghost"}
-                size="sm"
-                asChild
-                className="flex items-center space-x-2 whitespace-nowrap"
-              >
-                <Link to={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Outlet />
-      </main>
-
-      {/* Bottom Navigation for Mobile */}
-      <BottomNavigation items={navigation} />
-    </div>
+    <BaseLayout
+      navigation={navigationConfig.student}
+      userRole="student"
+      userInfo={userInfo}
+      onLogout={handleLogout}
+    >
+      <Outlet />
+    </BaseLayout>
   )
 }
