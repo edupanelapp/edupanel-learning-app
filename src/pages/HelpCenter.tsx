@@ -2,8 +2,8 @@ import { Navigation } from "@/components/layout/Navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, BookOpen, Users, FileText, MessageSquare, ArrowLeft, HelpCircle, Settings } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Search, BookOpen, Users, FileText, MessageSquare, ArrowLeft, HelpCircle, Settings, Phone } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
 import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 export default function HelpCenter() {
@@ -16,16 +16,16 @@ export default function HelpCenter() {
       answer: "You can reset your password by clicking on the 'Forgot Password' link on the login page. Follow the instructions sent to your registered email address."
     },
     {
-      question: "How do I submit an assignment?",
-      answer: "Navigate to the course page, find the assignment section, and click on the 'Submit Assignment' button. You can upload files or enter your response directly."
+      question: "How do I access my course materials?",
+      answer: "Once logged in, navigate to the 'Subjects' section in your dashboard. All your enrolled courses and their materials will be listed there."
     },
     {
-      question: "How do I contact my instructor?",
-      answer: "You can contact your instructor through the messaging system in your course dashboard or by using the email provided in the course information."
+      question: "How do I submit assignments?",
+      answer: "Go to the 'Assignments' section, select the relevant assignment, and use the upload button to submit your work. Make sure to check the submission deadline."
     },
     {
-      question: "What are the system requirements?",
-      answer: "Our platform works best on modern browsers like Chrome, Firefox, Safari, or Edge. Make sure you have a stable internet connection for the best experience."
+      question: "How can I contact my instructors?",
+      answer: "You can contact your instructors through the messaging system in the platform. Go to the 'Messages' section and select the instructor you want to contact."
     }
   ]
 
@@ -59,13 +59,10 @@ export default function HelpCenter() {
       {/* Sticky Back Button */}
       <div className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="container mx-auto">
-          <Button 
-            variant="ghost" 
-            className="backdrop-blur-sm bg-background/50 hover:bg-background/80 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>
@@ -77,7 +74,7 @@ export default function HelpCenter() {
             Help Center
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground mb-4">
-            Find answers to common questions and learn how to make the most of our platform.
+            Find answers to common questions and get support when you need it.
           </p>
         </div>
       </section>

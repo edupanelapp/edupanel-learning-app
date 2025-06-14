@@ -1,24 +1,8 @@
 import { Navigation } from "@/components/layout/Navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { 
-  BookOpen, 
-  FileText, 
-  Presentation, 
-  Lightbulb, 
-  Users, 
-  Shield,
-  Calendar,
-  MessageSquare,
-  BarChart,
-  Bookmark,
-  Clock,
-  Award,
-  ArrowLeft,
-  Target,
-  Settings
-} from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { ArrowLeft, BookOpen, Users, Target, Award, Heart } from "lucide-react"
 import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 export default function Features() {
@@ -27,64 +11,29 @@ export default function Features() {
   
   const features = [
     {
-      icon: BookOpen,
-      title: "Organized Study Resources",
-      description: "Access structured learning materials and course content in a well-organized format."
+      title: "Comprehensive Learning Materials",
+      description: "Access a wide range of study materials, including lecture notes, presentations, and supplementary resources.",
+      icon: BookOpen
     },
     {
-      icon: FileText,
-      title: "Assignment Management",
-      description: "Submit and track assignments with an intuitive interface and automated grading system."
+      title: "Interactive Learning",
+      description: "Engage with interactive content, quizzes, and assignments to enhance your understanding.",
+      icon: Users
     },
     {
-      icon: Presentation,
       title: "Progress Tracking",
-      description: "Monitor your learning journey with detailed analytics and performance metrics."
+      description: "Monitor your academic progress with detailed analytics and performance metrics.",
+      icon: Target
     },
     {
-      icon: Lightbulb,
-      title: "Project Mentorship",
-      description: "Get guidance from experienced faculty members on your academic projects."
+      title: "Expert Mentorship",
+      description: "Get guidance from experienced faculty members and industry professionals.",
+      icon: Award
     },
     {
-      icon: Users,
-      title: "Collaborative Learning",
-      description: "Connect with peers and mentors in a structured environment for enhanced learning."
-    },
-    {
-      icon: Shield,
-      title: "Secure Access Control",
-      description: "Advanced security measures to protect your academic data and privacy."
-    },
-    {
-      icon: Calendar,
-      title: "Smart Scheduling",
-      description: "Organize your study schedule with intelligent planning tools and reminders."
-    },
-    {
-      icon: MessageSquare,
-      title: "Discussion Forums",
-      description: "Engage in meaningful academic discussions with peers and faculty."
-    },
-    {
-      icon: BarChart,
-      title: "Performance Analytics",
-      description: "Track your academic progress with detailed analytics and insights."
-    },
-    {
-      icon: Bookmark,
-      title: "Resource Library",
-      description: "Access a comprehensive collection of study materials and references."
-    },
-    {
-      icon: Clock,
-      title: "Time Management",
-      description: "Tools to help you manage your study time effectively and efficiently."
-    },
-    {
-      icon: Award,
-      title: "Achievement System",
-      description: "Get recognized for your academic achievements and milestones."
+      title: "Community Support",
+      description: "Connect with peers, participate in discussions, and collaborate on projects.",
+      icon: Heart
     }
   ]
 
@@ -95,13 +44,10 @@ export default function Features() {
       {/* Sticky Back Button */}
       <div className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="container mx-auto">
-          <Button 
-            variant="ghost" 
-            className="backdrop-blur-sm bg-background/50 hover:bg-background/80 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { Navigation } from "@/components/layout/Navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Shield, Lock, Eye, FileText, Settings } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 export default function PrivacyPolicy() {
@@ -11,20 +11,20 @@ export default function PrivacyPolicy() {
 
   const sections = [
     {
-      title: "Information We Collect",
-      content: "We collect information that you provide directly to us, including but not limited to your name, email address, educational institution, and academic information. We also collect information about your use of our services and your interactions with our platform."
+      title: "Information Collection",
+      content: "We collect information that you provide directly to us, including your name, email address, and academic information. We also collect information about your use of our platform."
     },
     {
-      title: "How We Use Your Information",
-      content: "We use the information we collect to provide, maintain, and improve our services, to communicate with you, to monitor and analyze trends, and to protect the security and integrity of our platform."
+      title: "Information Usage",
+      content: "We use the information we collect to provide, maintain, and improve our services, to communicate with you, and to personalize your experience."
     },
     {
       title: "Information Sharing",
-      content: "We do not share your personal information with third parties except as described in this policy. We may share information with your educational institution, with your consent, or as required by law."
+      content: "We do not share your personal information with third parties except as described in this policy. We may share information with your educational institution and service providers."
     },
     {
       title: "Data Security",
-      content: "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction."
+      content: "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
     },
     {
       title: "Your Rights",
@@ -43,13 +43,10 @@ export default function PrivacyPolicy() {
       {/* Sticky Back Button */}
       <div className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="container mx-auto">
-          <Button 
-            variant="ghost" 
-            className="backdrop-blur-sm bg-background/50 hover:bg-background/80 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>

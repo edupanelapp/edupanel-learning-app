@@ -2,7 +2,7 @@ import { Navigation } from "@/components/layout/Navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, FileText, Scale, Shield, AlertCircle, Settings } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 export default function TermsOfService() {
@@ -12,27 +12,27 @@ export default function TermsOfService() {
   const sections = [
     {
       title: "Acceptance of Terms",
-      content: "By accessing and using EduPanel Learning Hub, you accept and agree to be bound by the terms and conditions of this agreement."
+      content: "By accessing and using this platform, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using this platform."
     },
     {
-      title: "User Accounts",
+      title: "User Responsibilities",
       content: "You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account."
     },
     {
-      title: "User Conduct",
-      content: "You agree to use the platform only for lawful purposes and in accordance with these Terms. You must not use the platform in any way that violates any applicable laws or regulations."
+      title: "Academic Integrity",
+      content: "You agree to maintain academic integrity and not engage in any form of plagiarism, cheating, or academic misconduct while using the platform."
+    },
+    {
+      title: "Content Guidelines",
+      content: "You agree not to post or share any content that is illegal, harmful, threatening, abusive, harassing, defamatory, or otherwise objectionable."
     },
     {
       title: "Intellectual Property",
-      content: "The platform and its original content, features, and functionality are owned by EduPanel and are protected by international copyright, trademark, and other intellectual property laws."
+      content: "All content and materials available on this platform are protected by intellectual property rights. You may not use, reproduce, or distribute any content without proper authorization."
     },
     {
       title: "Termination",
-      content: "We may terminate or suspend your account and bar access to the platform immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever."
-    },
-    {
-      title: "Limitation of Liability",
-      content: "In no event shall EduPanel be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses."
+      content: "We reserve the right to terminate or suspend your access to the platform at any time, without notice, for any reason, including violation of these Terms of Service."
     }
   ]
 
@@ -43,13 +43,10 @@ export default function TermsOfService() {
       {/* Sticky Back Button */}
       <div className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="container mx-auto">
-          <Button 
-            variant="ghost" 
-            className="backdrop-blur-sm bg-background/50 hover:bg-background/80 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>

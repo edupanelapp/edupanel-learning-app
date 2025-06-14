@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, Phone, MapPin, Send, ArrowLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useScrollToTop } from "@/hooks/useScrollToTop"
 
 export default function Contact() {
@@ -18,13 +18,10 @@ export default function Contact() {
       {/* Sticky Back Button */}
       <div className="sticky top-16 z-40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="container mx-auto">
-          <Button 
-            variant="ghost" 
-            className="backdrop-blur-sm bg-background/50 hover:bg-background/80 transition-colors"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
       </div>
