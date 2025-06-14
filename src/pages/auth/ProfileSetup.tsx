@@ -843,8 +843,8 @@ export default function ProfileSetup() {
                           type="url"
                           value={formData.website}
                           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        />
-                      </div>
+                      />
+                    </div>
                   </>
                 )}
                 </div>
