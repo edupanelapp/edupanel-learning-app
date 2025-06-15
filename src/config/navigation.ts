@@ -38,23 +38,11 @@ export const navigationConfig = {
       icon: FileText,
       description: "Track and submit your assignments"
     },
-    { 
-      name: "Projects", 
-      href: "/student/projects", 
-      icon: Rocket,
-      description: "Manage your academic projects"
-    },
-    { 
-      name: "Progress", 
-      href: "/student/progress", 
-      icon: TrendingUp,
-      description: "Monitor your academic performance"
-    },
     {
-      name: "Calendar",
-      href: "/student/calendar",
+      name: "Schedule",
+      href: "/student/schedule",
       icon: Calendar,
-      description: "View your academic schedule"
+      description: "View your academic schedule and deadlines"
     }
   ],
   faculty: [
@@ -75,12 +63,6 @@ export const navigationConfig = {
       href: "/faculty/assignments", 
       icon: FileText,
       description: "Create and grade assignments"
-    },
-    { 
-      name: "Projects", 
-      href: "/faculty/projects", 
-      icon: Rocket,
-      description: "Supervise student projects"
     },
     { 
       name: "Students", 
@@ -143,6 +125,23 @@ export const navigationConfig = {
       href: "/hod/reports",
       icon: BarChart,
       description: "View department analytics"
+    }
+  ]
+}
+
+export const userMenuItems = {
+  student: [
+    {
+      name: "Projects",
+      href: "/student/projects",
+      icon: Rocket,
+      description: "Manage your academic projects"
+    },
+    {
+      name: "Progress",
+      href: "/student/progress",
+      icon: TrendingUp,
+      description: "Monitor your academic performance"
     }
   ]
 } 

@@ -29,6 +29,7 @@ import StudentAssignments from "./pages/student/StudentAssignments";
 import StudentProjects from "./pages/student/StudentProjects";
 import StudentProgress from "./pages/student/StudentProgress";
 import StudentProfile from "./pages/student/StudentProfile";
+import StudentSchedule from "./pages/student/StudentSchedule";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/FacultyDashboard";
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="dashboard" element={<StudentDashboard />} />
                 <Route path="subjects" element={<StudentSubjects />} />
                 <Route path="assignments" element={<StudentAssignments />} />
+                <Route path="schedule" element={<StudentSchedule />} />
                 <Route path="projects" element={<StudentProjects />} />
                 <Route path="progress" element={<StudentProgress />} />
                 <Route path="profile" element={<StudentProfile />} />
