@@ -158,8 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
     try {
       const redirectUrl = `${window.location.origin}/`
-      
-      const { error } = await supabase.auth.signUp({
+      // LOG: show exactly what is being sent to Supabase
+      console.log("[Register] Attempt to create user with", { email, password, role, redirectUrl });
+
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -168,9 +170,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: role
           }
         }
-      })
+      });
 
+      // LOG the full error and data response from Supabase
       if (error) {
+        console.error("[Register] Registration failed with error:", error, "Returned data:", data);
         return { error: error.message }
       }
 
@@ -181,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return {}
     } catch (error: any) {
-      console.error('Registration failed:', error)
+      console.error('[Register] Registration failed (JS error):', error)
       return { error: error.message || 'Registration failed' }
     }
   }
