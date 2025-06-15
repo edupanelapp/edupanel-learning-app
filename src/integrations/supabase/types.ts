@@ -9,7 +9,269 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      faculty_profiles: {
+        Row: {
+          address: string | null
+          approved_by: string | null
+          created_at: string | null
+          department: string
+          designation: string
+          employee_id: string | null
+          experience_years: number | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          qualification: string
+          specialization: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          department: string
+          designation: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          qualification: string
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          department?: string
+          designation?: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          qualification?: string
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_profiles_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faculty_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hod_profiles: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          department: string
+          employee_id: string | null
+          experience_years: number | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          qualification: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          department: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          qualification: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          department?: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          qualification?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hod_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_profiles: {
+        Row: {
+          address: string | null
+          approved_by: string | null
+          batch: string
+          created_at: string | null
+          department: string
+          full_name: string
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          phone_number: string | null
+          roll_number: string | null
+          semester: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_by?: string | null
+          batch: string
+          created_at?: string | null
+          department: string
+          full_name: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          phone_number?: string | null
+          roll_number?: string | null
+          semester: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_by?: string | null
+          batch?: string
+          created_at?: string | null
+          department?: string
+          full_name?: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          phone_number?: string | null
+          roll_number?: string | null
+          semester?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_profiles_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          email_verified: boolean | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          email_verified?: boolean | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          email_verified?: boolean | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          approver_id: string | null
+          comments: string | null
+          created_at: string | null
+          id: string
+          request_type: Database["public"]["Enums"]["user_role"]
+          requested_at: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["verification_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          request_type: Database["public"]["Enums"]["user_role"]
+          requested_at?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["verification_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          request_type?: Database["public"]["Enums"]["user_role"]
+          requested_at?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["verification_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +280,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "student" | "faculty" | "hod"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +396,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["student", "faculty", "hod"],
+      verification_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const

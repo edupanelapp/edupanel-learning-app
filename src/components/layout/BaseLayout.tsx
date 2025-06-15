@@ -1,4 +1,5 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
+
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Bell } from "lucide-react"
@@ -38,10 +39,6 @@ export function BaseLayout({
       // Call the parent's onLogout function
       onLogout()
       
-      // Clear any stored tokens or user data
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      
       // Show success message
       toast({
         title: "Logged out successfully",
@@ -66,12 +63,12 @@ export function BaseLayout({
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to={`/${userRole}/dashboard`} className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate(`/${userRole}/dashboard`)}>
               <GraduationCap className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold text-primary hidden sm:block">
                 EduPanel Learning Hub
               </span>
-            </Link>
+            </div>
 
             {/* Desktop Navigation */}
             <DesktopNav items={navigation} isActive={isActive} />
@@ -104,4 +101,4 @@ export function BaseLayout({
       <BottomNavigation items={navigation} />
     </div>
   )
-} 
+}

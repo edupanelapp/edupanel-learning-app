@@ -1,4 +1,5 @@
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,43 +8,77 @@ import { Label } from "@/components/ui/label"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { GraduationCap, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Login() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { login, user, loading } = useAuth()
   const role = searchParams.get("role") || "student"
   
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   })
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!loading && user) {
+      if (!user.emailVerified) {
+        toast({
+          title: "Email Verification Required",
+          description: "Please check your email and verify your account.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      if (!user.profileComplete) {
+        navigate(`/profile-setup?role=${user.role}`)
+        return
+      }
+
+      if (user.approvalStatus === 'pending') {
+        navigate(`/pending-approval?role=${user.role}`)
+        return
+      }
+
+      if (user.approvalStatus === 'rejected') {
+        toast({
+          title: "Account Rejected",
+          description: "Your profile was rejected. Please contact support.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      // Redirect to dashboard
+      navigate(`/${user.role}/dashboard`)
+    }
+  }, [user, loading, navigate, toast])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Simulate login
-    console.log("Login data:", { ...formData, role })
-    
+    setIsLoading(true)
+    const { error } = await login(formData.email, formData.password)
+    setIsLoading(false)
+
+    if (error) {
+      toast({
+        title: "Login Failed",
+        description: error,
+        variant: "destructive"
+      })
+      return
+    }
+
     toast({
       title: "Login Successful",
-      description: `Welcome back to EduPanel!`,
+      description: "Welcome back to EduPanel!",
     })
-
-    // Redirect based on role
-    switch (role) {
-      case "student":
-        navigate("/student/dashboard")
-        break
-      case "faculty":
-        navigate("/faculty/dashboard")
-        break
-      case "hod":
-        navigate("/hod/dashboard")
-        break
-      default:
-        navigate("/")
-    }
   }
 
   const getRoleTitle = () => {
@@ -62,6 +97,17 @@ export default function Login() {
       case "hod": return "Administrative access for department management"
       default: return "Sign in to your account"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -102,6 +148,7 @@ export default function Login() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -114,6 +161,7 @@ export default function Login() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -123,8 +171,8 @@ export default function Login() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 

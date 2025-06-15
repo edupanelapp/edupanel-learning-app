@@ -1,20 +1,22 @@
+
 import { useState } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { GraduationCap, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Register() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const role = searchParams.get("role") || "student"
+  const { register } = useAuth()
+  const role = (searchParams.get("role") || "student") as 'student' | 'faculty' | 'hod'
   
   const [formData, setFormData] = useState({
     email: "",
@@ -22,8 +24,9 @@ export default function Register() {
     confirmPassword: "",
     fullName: ""
   })
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (formData.password !== formData.confirmPassword) {
@@ -44,16 +47,21 @@ export default function Register() {
       return
     }
 
-    // Simulate registration
-    console.log("Registration data:", { ...formData, role })
-    
-    toast({
-      title: "Registration Successful",
-      description: "Please complete your profile setup.",
-    })
+    setIsLoading(true)
+    const { error } = await register(formData.email, formData.password, role)
+    setIsLoading(false)
 
-    // Redirect to profile setup with email parameter
-    navigate(`/profile-setup?role=${role}&email=${encodeURIComponent(formData.email)}`)
+    if (error) {
+      toast({
+        title: "Registration Failed",
+        description: error,
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Success handled in useAuth hook
+    navigate(`/login?role=${role}`)
   }
 
   const getRoleTitle = () => {
@@ -112,6 +120,7 @@ export default function Register() {
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -124,6 +133,7 @@ export default function Register() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -136,6 +146,7 @@ export default function Register() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
                 <PasswordStrengthIndicator password={formData.password} />
               </div>
@@ -149,11 +160,12 @@ export default function Register() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Create Account
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 
