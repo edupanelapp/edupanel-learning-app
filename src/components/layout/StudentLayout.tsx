@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom"
+
 import { BaseLayout } from "./BaseLayout"
 import { navigationConfig } from "@/config/navigation"
 import { useAuth } from "@/hooks/useAuth"
@@ -29,8 +29,6 @@ export function StudentLayout() {
       userRole="student"
       userInfo={userInfo}
       onLogout={handleLogout}
-    >
-      <Outlet />
-    </BaseLayout>
+    />
   )
 }
