@@ -58,22 +58,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "faculty_profiles_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "faculty_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       hod_profiles: {
         Row: {
@@ -115,15 +100,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "hod_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       student_profiles: {
         Row: {
@@ -174,22 +151,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "student_profiles_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "student_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users: {
         Row: {
@@ -224,10 +186,8 @@ export type Database = {
           comments: string | null
           created_at: string | null
           id: string
-          request_type: Database["public"]["Enums"]["user_role"]
           requested_at: string | null
           reviewed_at: string | null
-          status: Database["public"]["Enums"]["verification_status"] | null
           updated_at: string | null
           user_id: string | null
         }
@@ -236,10 +196,8 @@ export type Database = {
           comments?: string | null
           created_at?: string | null
           id?: string
-          request_type: Database["public"]["Enums"]["user_role"]
           requested_at?: string | null
           reviewed_at?: string | null
-          status?: Database["public"]["Enums"]["verification_status"] | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -248,29 +206,12 @@ export type Database = {
           comments?: string | null
           created_at?: string | null
           id?: string
-          request_type?: Database["public"]["Enums"]["user_role"]
           requested_at?: string | null
           reviewed_at?: string | null
-          status?: Database["public"]["Enums"]["verification_status"] | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "verification_requests_approver_id_fkey"
-            columns: ["approver_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
