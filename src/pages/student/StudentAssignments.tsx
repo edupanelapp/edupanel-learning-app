@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -69,12 +68,12 @@ export default function StudentAssignments() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Assignments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Assignments</h1>
           <p className="text-muted-foreground">View and submit your assignments</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <Badge variant="destructive">
             {pendingAssignments.length} pending
           </Badge>
@@ -85,17 +84,17 @@ export default function StudentAssignments() {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="pending">Pending ({pendingAssignments.length})</TabsTrigger>
-          <TabsTrigger value="submitted">Submitted ({submittedAssignments.length})</TabsTrigger>
+        <TabsList className="w-full flex flex-col sm:flex-row gap-2 sm:gap-0">
+          <TabsTrigger value="pending" className="flex-1">Pending ({pendingAssignments.length})</TabsTrigger>
+          <TabsTrigger value="submitted" className="flex-1">Submitted ({submittedAssignments.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending">
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {pendingAssignments.map((assignment) => (
               <Card key={assignment.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
                       <CardTitle>{assignment.title}</CardTitle>
                       <CardDescription>
@@ -109,8 +108,8 @@ export default function StudentAssignments() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground">
                       <span className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
                         Due: {assignment.dueDate}
@@ -119,7 +118,7 @@ export default function StudentAssignments() {
                         <span className="text-red-500 font-medium">Overdue</span>
                       )}
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm">View Details</Button>
                       <Button size="sm">
                         <Upload className="h-4 w-4 mr-1" />
@@ -134,11 +133,11 @@ export default function StudentAssignments() {
         </TabsContent>
 
         <TabsContent value="submitted">
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {submittedAssignments.map((assignment) => (
               <Card key={assignment.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
                       <CardTitle>{assignment.title}</CardTitle>
                       <CardDescription>
@@ -152,9 +151,9 @@ export default function StudentAssignments() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="space-y-1">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
                           Due: {assignment.dueDate}
@@ -166,7 +165,7 @@ export default function StudentAssignments() {
                         </div>
                       )}
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm">View Submission</Button>
                       <Button variant="outline" size="sm">Download</Button>
                     </div>

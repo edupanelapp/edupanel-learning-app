@@ -39,6 +39,7 @@ import FacultyProjects from "./pages/faculty/FacultyProjects";
 import FacultyStudents from "./pages/faculty/FacultyStudents";
 import FacultyApprovals from "./pages/faculty/FacultyApprovals";
 import FacultyProfile from "./pages/faculty/FacultyProfile";
+import FacultySchedule from "./pages/faculty/FacultySchedule";
 
 // HOD Pages
 import HODDashboard from "./pages/hod/HODDashboard";
@@ -48,6 +49,7 @@ import HODFaculty from "./pages/hod/HODFaculty";
 import HODStudents from "./pages/hod/HODStudents";
 import HODAnnouncements from "./pages/hod/HODAnnouncements";
 import HODProfile from "./pages/hod/HODProfile";
+import Reports from "./pages/hod/Reports";
 
 import NotFound from "./pages/NotFound";
 
@@ -99,6 +101,7 @@ const App = () => (
                 <Route path="students" element={<FacultyStudents />} />
                 <Route path="approvals" element={<FacultyApprovals />} />
                 <Route path="profile" element={<FacultyProfile />} />
+                <Route path="schedule" element={<FacultySchedule />} />
               </Route>
 
               {/* HOD Routes */}
@@ -110,6 +113,7 @@ const App = () => (
                 <Route path="students" element={<HODStudents />} />
                 <Route path="announcements" element={<HODAnnouncements />} />
                 <Route path="profile" element={<HODProfile />} />
+                <Route path="reports" element={<Reports />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

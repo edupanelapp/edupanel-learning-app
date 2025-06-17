@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, Users, Award, Presentation, FileText, Lightbulb, Shield, ArrowRight, GraduationCap, Sparkles, Star, CheckCircle2, ChevronDown, ArrowUp } from "lucide-react"
 import { useState, useEffect } from "react"
+import { Logo } from "@/components/ui/Logo"
 
 export default function Landing() {
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -287,10 +288,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {/* Company Info */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-primary" />
-                <span className="text-xl font-bold text-primary">EduPanel Learning Hub</span>
-              </div>
+              <Logo />
               <p className="text-sm text-muted-foreground max-w-md">
                 Empowering the next generation of learners through innovative education technology and structured learning experiences.
               </p>

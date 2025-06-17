@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { User, LogOut } from "lucide-react"
+import { userMenuItems } from "@/config/navigation"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface UserMenuProps {
   userInfo: {
@@ -20,16 +22,23 @@ interface UserMenuProps {
   }
   profileUrl: string
   onLogout: () => void
+  userRole: "student" | "faculty" | "hod"
 }
 
-export function UserMenu({ userInfo, profileUrl, onLogout }: UserMenuProps) {
+export function UserMenu({ userInfo, profileUrl, onLogout, userRole }: UserMenuProps) {
+  const menuItems = userMenuItems[userRole] || []
+  const isMobile = useMediaQuery("(max-width: 768px)")
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={userInfo.avatar} alt={userInfo.name} />
-            <AvatarFallback>{userInfo.initials}</AvatarFallback>
+            {userInfo.avatar ? (
+              <img src={userInfo.avatar} alt={userInfo.name} />
+            ) : (
+              <AvatarFallback>{userInfo.initials}</AvatarFallback>
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -49,6 +58,14 @@ export function UserMenu({ userInfo, profileUrl, onLogout }: UserMenuProps) {
             Profile
           </Link>
         </DropdownMenuItem>
+        {menuItems.map((item) => (
+          <DropdownMenuItem key={item.href} asChild>
+            <Link to={item.href} className="flex items-center">
+              <item.icon className="mr-2 h-4 w-4" />
+              {item.name}
+            </Link>
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onLogout}>
           <LogOut className="mr-2 h-4 w-4" />

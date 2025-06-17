@@ -6,13 +6,16 @@ import { cn } from "@/lib/utils"
 interface BottomNavProps {
   items: NavigationItem[]
   isActive: (href: string) => boolean
+  userRole: "student" | "faculty" | "hod"
 }
 
-export function BottomNav({ items, isActive }: BottomNavProps) {
+export function BottomNav({ items, isActive, userRole }: BottomNavProps) {
   // Filter items to show only the ones we want in the bottom nav
-  const bottomNavItems = items.filter(item => 
-    ["Dashboard", "Subjects", "Assignments", "Schedule"].includes(item.name)
-  )
+  const bottomNavItems = items.filter(item => {
+    const baseItems = ["Dashboard", "Subjects", "Assignments", "Schedule"]
+    const facultyItems = userRole === "faculty" ? ["Students", "Approvals"] : []
+    return [...baseItems, ...facultyItems].includes(item.name)
+  })
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">

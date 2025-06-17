@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -56,22 +55,22 @@ export default function StudentProjects() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">My Projects</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Projects</h1>
           <p className="text-muted-foreground">Track and submit your academic projects</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" className="w-full sm:w-auto">
           <Eye className="h-4 w-4 mr-2" />
           Browse Available Projects
         </Button>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {projects.map((project) => (
           <Card key={project.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div className="flex-1">
                   <CardTitle className="flex items-center space-x-2">
                     <Rocket className="h-5 w-5" />
@@ -120,8 +119,8 @@ export default function StudentProjects() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex space-x-6 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center">
                     <User className="h-4 w-4 mr-1" />
                     Mentor: {project.mentor}
@@ -132,7 +131,7 @@ export default function StudentProjects() {
                   </span>
                   <span>{project.submittedFiles} files submitted</span>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm">
                     <Eye className="h-4 w-4 mr-1" />
                     View Details
@@ -156,7 +155,7 @@ export default function StudentProjects() {
             <Rocket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No projects assigned</h3>
             <p className="text-muted-foreground mb-4">Browse available projects or wait for your mentor to assign one</p>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Eye className="h-4 w-4 mr-2" />
               Browse Available Projects
             </Button>

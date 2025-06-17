@@ -39,6 +39,12 @@ export const navigationConfig = {
       description: "Track and submit your assignments"
     },
     {
+      name: "Projects",
+      href: "/student/projects",
+      icon: Rocket,
+      description: "Manage your academic projects"
+    },
+    {
       name: "Schedule",
       href: "/student/schedule",
       icon: Calendar,
@@ -64,17 +70,11 @@ export const navigationConfig = {
       icon: FileText,
       description: "Create and grade assignments"
     },
-    { 
-      name: "Students", 
-      href: "/faculty/students", 
-      icon: Users,
-      description: "View and manage student progress"
-    },
-    { 
-      name: "Approvals", 
-      href: "/faculty/approvals", 
-      icon: UserCheck,
-      description: "Review student submissions"
+    {
+      name: "Projects",
+      href: "/faculty/projects",
+      icon: Rocket,
+      description: "Manage course projects"
     },
     {
       name: "Schedule",
@@ -132,16 +132,38 @@ export const navigationConfig = {
 export const userMenuItems = {
   student: [
     {
-      name: "Projects",
-      href: "/student/projects",
-      icon: Rocket,
-      description: "Manage your academic projects"
-    },
-    {
       name: "Progress",
       href: "/student/progress",
       icon: TrendingUp,
       description: "Monitor your academic performance"
+    }
+  ],
+  faculty: [
+    {
+      name: "Students",
+      href: "/faculty/students",
+      icon: Users,
+      description: "View and manage student progress"
+    },
+    {
+      name: "Approvals",
+      href: "/faculty/approvals",
+      icon: UserCheck,
+      description: "Review student submissions"
+    }
+  ],
+  hod: [
+    {
+      name: "Reports",
+      href: "/hod/reports",
+      icon: BarChart,
+      description: "View department analytics"
+    },
+    {
+      name: "Schedule",
+      href: "/hod/schedule",
+      icon: Calendar,
+      description: "Manage department schedule"
     }
   ]
 } 
