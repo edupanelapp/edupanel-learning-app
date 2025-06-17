@@ -50,25 +50,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Check if profile exists based on role
+      // Check if profile exists and is complete based on role
       let profileComplete = false
       let approvalStatus: 'pending' | 'approved' | 'rejected' | undefined = undefined
 
       if (userData.role === 'student') {
         const { data: profileData } = await supabase
           .from('student_profiles')
-          .select('*')
+          .select('is_complete')
           .eq('user_id', session.user.id)
           .single()
 
-        profileComplete = !!profileData
+        profileComplete = profileData?.is_complete || false
 
         if (profileComplete) {
+          // Check verification status
           const { data: verificationData } = await supabase
-            .from('verification_requests')
+            .from('profile_verifications')
             .select('status')
-            .eq('user_id', session.user.id)
-            .eq('request_type', 'student')
+            .eq('applicant_id', session.user.id)
+            .eq('role', 'student')
             .order('created_at', { ascending: false })
             .limit(1)
             .single()
@@ -78,18 +79,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (userData.role === 'faculty') {
         const { data: profileData } = await supabase
           .from('faculty_profiles')
-          .select('*')
+          .select('is_complete')
           .eq('user_id', session.user.id)
           .single()
 
-        profileComplete = !!profileData
+        profileComplete = profileData?.is_complete || false
 
         if (profileComplete) {
+          // Check verification status
           const { data: verificationData } = await supabase
-            .from('verification_requests')
+            .from('profile_verifications')
             .select('status')
-            .eq('user_id', session.user.id)
-            .eq('request_type', 'faculty')
+            .eq('applicant_id', session.user.id)
+            .eq('role', 'faculty')
             .order('created_at', { ascending: false })
             .limit(1)
             .single()
@@ -97,14 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           approvalStatus = verificationData?.status || 'pending'
         }
       } else if (userData.role === 'hod') {
-        const { data: profileData } = await supabase
-          .from('hod_profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single()
-
-        profileComplete = !!profileData
-        approvalStatus = 'approved' // HODs are pre-approved
+        // HODs don't need profile setup or approval
+        profileComplete = true
+        approvalStatus = 'approved'
       }
 
       setUser({
@@ -112,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: session.user.user_metadata?.name || userData.email.split('@')[0],
         email: userData.email,
         role: userData.role,
-        emailVerified: userData.email_verified,
+        emailVerified: !!userData.email_verified_at,
         profileComplete,
         approvalStatus
       })
@@ -158,8 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
     try {
       const redirectUrl = `${window.location.origin}/`
-      // LOG: show exactly what is being sent to Supabase
-      console.log("[Register] Attempt to create user with", { email, password, role, redirectUrl });
+      console.log("[Register] Attempt to create user with", { email, role, redirectUrl });
 
       const { error, data } = await supabase.auth.signUp({
         email,
@@ -172,9 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      // LOG the full error and data response from Supabase
       if (error) {
-        console.error("[Register] Registration failed with error:", error, "Returned data:", data);
+        console.error("[Register] Registration failed with error:", error);
         return { error: error.message }
       }
 

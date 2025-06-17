@@ -50,6 +50,7 @@ import HODAnnouncements from "./pages/hod/HODAnnouncements";
 import HODProfile from "./pages/hod/HODProfile";
 
 import NotFound from "./pages/NotFound";
+import Verifications from "./pages/admin/Verifications";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
+              <Route path="/admin/verifications" element={<Verifications />} />
               
               {/* Student Routes */}
               <Route path="/student" element={<StudentLayout />}>
@@ -99,6 +101,7 @@ const App = () => (
                 <Route path="students" element={<FacultyStudents />} />
                 <Route path="approvals" element={<FacultyApprovals />} />
                 <Route path="profile" element={<FacultyProfile />} />
+                <Route path="verifications" element={<Verifications />} />
               </Route>
 
               {/* HOD Routes */}
@@ -110,6 +113,7 @@ const App = () => (
                 <Route path="students" element={<HODStudents />} />
                 <Route path="announcements" element={<HODAnnouncements />} />
                 <Route path="profile" element={<HODProfile />} />
+                <Route path="verifications" element={<Verifications />} />
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

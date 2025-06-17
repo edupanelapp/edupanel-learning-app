@@ -38,7 +38,7 @@ export default function ProfileSetup() {
     if (role === 'student') {
       setFormData({
         fullName: '',
-        rollNumber: '',
+        studentId: '',
         department: '',
         semester: '',
         batch: '',
@@ -59,16 +59,6 @@ export default function ProfileSetup() {
         address: '',
         specialization: ''
       })
-    } else if (role === 'hod') {
-      setFormData({
-        fullName: '',
-        employeeId: '',
-        department: '',
-        qualification: '',
-        experienceYears: '',
-        phoneNumber: '',
-        address: ''
-      })
     }
   }, [user, role, navigate])
 
@@ -87,24 +77,25 @@ export default function ProfileSetup() {
           .insert({
             user_id: user.id,
             full_name: formData.fullName,
-            roll_number: formData.rollNumber,
+            student_id: formData.studentId,
             department: formData.department,
-            semester: parseInt(formData.semester),
+            semester: formData.semester ? parseInt(formData.semester) : null,
             batch: formData.batch,
             phone_number: formData.phoneNumber,
             address: formData.address,
             guardian_name: formData.guardianName,
-            guardian_phone: formData.guardianPhone
+            guardian_phone: formData.guardianPhone,
+            is_complete: true
           })
 
         if (profileError) throw profileError
 
         // Create verification request
         const { error: verificationError } = await supabase
-          .from('verification_requests')
+          .from('profile_verifications')
           .insert({
-            user_id: user.id,
-            request_type: 'student',
+            applicant_id: user.id,
+            role: 'student',
             status: 'pending'
           })
 
@@ -124,52 +115,32 @@ export default function ProfileSetup() {
             experience_years: formData.experienceYears ? parseInt(formData.experienceYears) : null,
             phone_number: formData.phoneNumber,
             address: formData.address,
-            specialization: formData.specialization
+            specialization: formData.specialization,
+            is_complete: true
           })
 
         if (profileError) throw profileError
 
         // Create verification request
         const { error: verificationError } = await supabase
-          .from('verification_requests')
+          .from('profile_verifications')
           .insert({
-            user_id: user.id,
-            request_type: 'faculty',
+            applicant_id: user.id,
+            role: 'faculty',
             status: 'pending'
           })
 
         if (verificationError) throw verificationError
-
-      } else if (role === 'hod') {
-        // Insert HOD profile
-        const { error: profileError } = await supabase
-          .from('hod_profiles')
-          .insert({
-            user_id: user.id,
-            full_name: formData.fullName,
-            employee_id: formData.employeeId,
-            department: formData.department,
-            qualification: formData.qualification,
-            experience_years: formData.experienceYears ? parseInt(formData.experienceYears) : null,
-            phone_number: formData.phoneNumber,
-            address: formData.address
-          })
-
-        if (profileError) throw profileError
       }
 
       await checkProfileStatus()
 
       toast({
         title: "Profile Setup Complete",
-        description: role === 'hod' ? "Welcome to EduPanel!" : "Your profile is now under review.",
+        description: "Your profile is now under review.",
       })
 
-      if (role === 'hod') {
-        navigate(`/${role}/dashboard`)
-      } else {
-        navigate(`/pending-approval?role=${role}`)
-      }
+      navigate(`/pending-approval?role=${role}`)
 
     } catch (error: any) {
       console.error('Profile setup failed:', error)
@@ -187,12 +158,12 @@ export default function ProfileSetup() {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="rollNumber">Roll Number</Label>
+          <Label htmlFor="studentId">Student ID</Label>
           <Input
-            id="rollNumber"
-            value={formData.rollNumber}
-            onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-            placeholder="Enter your roll number"
+            id="studentId"
+            value={formData.studentId}
+            onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+            placeholder="Enter your student ID"
             required
           />
         </div>
@@ -233,7 +204,6 @@ export default function ProfileSetup() {
             value={formData.batch}
             onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
             placeholder="e.g., 2024-2028"
-            required
           />
         </div>
       </div>
@@ -270,6 +240,7 @@ export default function ProfileSetup() {
             value={formData.employeeId}
             onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
             placeholder="Enter employee ID"
+            required
           />
         </div>
         <div className="space-y-2">
@@ -336,57 +307,6 @@ export default function ProfileSetup() {
     </>
   )
 
-  const renderHODFields = () => (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="employeeId">Employee ID</Label>
-          <Input
-            id="employeeId"
-            value={formData.employeeId}
-            onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-            placeholder="Enter employee ID"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="experienceYears">Experience (Years)</Label>
-          <Input
-            id="experienceYears"
-            type="number"
-            value={formData.experienceYears}
-            onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-            placeholder="Years of experience"
-          />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="department">Department</Label>
-        <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select department" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Computer Science">Computer Science</SelectItem>
-            <SelectItem value="Information Technology">Information Technology</SelectItem>
-            <SelectItem value="Electronics">Electronics</SelectItem>
-            <SelectItem value="Mechanical">Mechanical</SelectItem>
-            <SelectItem value="Civil">Civil</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="qualification">Qualification</Label>
-        <Input
-          id="qualification"
-          value={formData.qualification}
-          onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-          placeholder="e.g., PhD in Computer Science"
-          required
-        />
-      </div>
-    </>
-  )
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -423,18 +343,15 @@ export default function ProfileSetup() {
 
               {role === 'student' && renderStudentFields()}
               {role === 'faculty' && renderFacultyFields()}
-              {role === 'hod' && renderHODFields()}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input
-                    id="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumber">Phone Number</Label>
+                <Input
+                  id="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  placeholder="Enter your phone number"
+                />
               </div>
 
               <div className="space-y-2">
