@@ -9,12 +9,13 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/integrations/supabase/client"
 import { CheckCircle, XCircle, Clock, User } from "lucide-react"
+import { Database } from "@/integrations/supabase/types"
 
 interface VerificationRequest {
   id: string
   applicant_id: string
-  role: 'student' | 'faculty'
-  status: 'pending' | 'approved' | 'rejected'
+  role: Database["public"]["Enums"]["user_role"]
+  status: Database["public"]["Enums"]["verification_status"]
   submitted_at: string
   applicant: {
     email: string
