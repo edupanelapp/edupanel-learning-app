@@ -9,6 +9,7 @@ import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthInd
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { GraduationCap, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Logo } from "@/components/ui/Logo"
 
 export default function Register() {
   const [searchParams] = useSearchParams()
@@ -19,8 +20,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: "",
-    fullName: ""
+    confirmPassword: ""
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -78,10 +78,7 @@ export default function Register() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
-        <Link to="/" className="flex items-center space-x-2">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          <span className="font-bold text-primary">EduPanel Learning Hub</span>
-        </Link>
+        <Logo />
         <ThemeToggle />
       </div>
 
@@ -103,18 +100,6 @@ export default function Register() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
