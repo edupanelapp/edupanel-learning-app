@@ -1,4 +1,5 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
+
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Bell, GraduationCap, ArrowLeft } from "lucide-react"
@@ -40,10 +41,6 @@ export function BaseLayout({
       // Call the parent's onLogout function
       onLogout()
       
-      // Clear any stored tokens or user data
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      
       // Show success message
       toast({
         title: "Logged out successfully",
@@ -65,6 +62,7 @@ export function BaseLayout({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
+<<<<<<< HEAD
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
         <div className="flex h-16 items-center justify-between px-4">
           <div className="flex items-center space-x-2">
@@ -95,6 +93,17 @@ export function BaseLayout({
               </Link>
             )}
           </div>
+=======
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate(`/${userRole}/dashboard`)}>
+              <GraduationCap className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-primary hidden sm:block">
+                EduPanel Learning Hub
+              </span>
+            </div>
+>>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
 
           <div className="flex items-center space-x-4">
             {!isProfilePage && (
@@ -142,4 +151,4 @@ export function BaseLayout({
       {!isProfilePage && <BottomNav items={navigation} isActive={isActive} userRole={userRole} />}
     </div>
   )
-} 
+}
