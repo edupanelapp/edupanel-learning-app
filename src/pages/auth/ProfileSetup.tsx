@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle"
 import { GraduationCap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuth"
+import { supabase } from "@/integrations/supabase/client"
 
 export default function ProfileSetup() {
   const [searchParams] = useSearchParams()
@@ -35,7 +36,7 @@ export default function ProfileSetup() {
     // Initialize form data based on role
     if (role === 'student') {
       setFormData({
-        fullName: '',
+        fullName: user.name || '',
         studentId: '',
         department: '',
         semester: '',
@@ -47,7 +48,7 @@ export default function ProfileSetup() {
       })
     } else if (role === 'faculty') {
       setFormData({
-        fullName: '',
+        fullName: user.name || '',
         employeeId: '',
         department: '',
         designation: '',
@@ -68,21 +69,27 @@ export default function ProfileSetup() {
     setIsLoading(true)
 
     try {
-      // Simulate database operations
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Update the user's profile in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.fullName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
 
-      // Mock profile creation - in real app, this would insert into database
-      console.log('Creating profile for user:', user.id, 'with role:', role)
-      console.log('Profile data:', formData)
+      if (error) {
+        throw error
+      }
 
       await checkProfileStatus()
 
       toast({
         title: "Profile Setup Complete",
-        description: "Your profile is now under review.",
+        description: "Your profile has been updated successfully.",
       })
 
-      navigate(`/pending-approval?role=${role}`)
+      navigate(`/${role}/dashboard`)
 
     } catch (error: any) {
       console.error('Profile setup failed:', error)
