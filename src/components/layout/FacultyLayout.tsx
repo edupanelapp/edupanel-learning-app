@@ -26,7 +26,7 @@ export function FacultyLayout() {
   return (
     <BaseLayout
       navigation={navigationConfig.faculty}
-      userRole="teacher"
+      userRole="faculty"
       userInfo={userInfo}
       onLogout={handleLogout}
     />

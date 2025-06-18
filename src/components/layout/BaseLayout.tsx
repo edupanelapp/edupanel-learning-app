@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 
 interface BaseLayoutProps {
   navigation: NavigationItem[]
-  userRole: "student" | "teacher" | "hod"
+  userRole: "student" | "faculty" | "hod"
   userInfo: {
     name: string
     email: string
