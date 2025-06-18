@@ -1,3 +1,4 @@
+
 import { Outlet } from "react-router-dom"
 import { BaseLayout } from "./BaseLayout"
 import { navigationConfig } from "@/config/navigation"
@@ -25,7 +26,7 @@ export function FacultyLayout() {
   return (
     <BaseLayout
       navigation={navigationConfig.faculty}
-      userRole="faculty"
+      userRole="teacher"
       userInfo={userInfo}
       onLogout={handleLogout}
     >

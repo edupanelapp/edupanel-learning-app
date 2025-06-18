@@ -1,3 +1,4 @@
+
 import { Outlet } from "react-router-dom"
 import { BaseLayout } from "./BaseLayout"
 import { navigationConfig } from "@/config/navigation"
@@ -28,8 +29,6 @@ export function HODLayout() {
       userRole="hod"
       userInfo={userInfo}
       onLogout={handleLogout}
-    >
-      <Outlet />
-    </BaseLayout>
+    />
   )
 }
