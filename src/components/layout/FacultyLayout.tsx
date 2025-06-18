@@ -29,8 +29,6 @@ export function FacultyLayout() {
       userRole="teacher"
       userInfo={userInfo}
       onLogout={handleLogout}
-    >
-      <Outlet />
-    </BaseLayout>
+    />
   )
 }
