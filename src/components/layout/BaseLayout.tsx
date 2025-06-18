@@ -1,5 +1,4 @@
-
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Outlet, useLocation, useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Bell, GraduationCap, ArrowLeft } from "lucide-react"
@@ -62,62 +61,52 @@ export function BaseLayout({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-<<<<<<< HEAD
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-        <div className="flex h-16 items-center justify-between px-4">
-          <div className="flex items-center space-x-2">
-            {isProfilePage ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-                onClick={() => navigate(`/${userRole}/dashboard`)}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            ) : (
-              <Link to={`/${userRole}/dashboard`} className="flex items-center space-x-2">
-                <GraduationCap className="h-8 w-8 text-primary" />
-                <div className="flex items-center">
-                  <span className="text-lg font-bold text-primary">
-                    EduPanel
-                  </span>
-                  <span className="text-lg font-bold text-primary hidden md:block">
-                    &nbsp;Learning Hub
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    &nbsp;| {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                  </span>
-                </div>
-              </Link>
-            )}
-          </div>
-=======
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate(`/${userRole}/dashboard`)}>
-              <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold text-primary hidden sm:block">
-                EduPanel Learning Hub
-              </span>
+            <div className="flex items-center space-x-2">
+              {isProfilePage ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => navigate(`/${userRole}/dashboard`)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              ) : (
+                <Link to={`/${userRole}/dashboard`} className="flex items-center space-x-2 cursor-pointer">
+                  <GraduationCap className="h-8 w-8 text-primary" />
+                  <div className="flex items-center">
+                    <span className="text-lg font-bold text-primary">
+                      EduPanel
+                    </span>
+                    <span className="text-lg font-bold text-primary hidden md:block">
+                      &nbsp;Learning Hub
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      &nbsp;| {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                    </span>
+                  </div>
+                </Link>
+              )}
             </div>
->>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
 
-          <div className="flex items-center space-x-4">
-            {!isProfilePage && (
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-            )}
-            <ThemeToggle />
-            <UserMenu 
-              userInfo={userInfo}
-              profileUrl={`/${userRole}/profile`}
-              onLogout={handleLogout}
-              userRole={userRole}
-            />
+            <div className="flex items-center space-x-4">
+              {!isProfilePage && (
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-5 w-5" />
+                </Button>
+              )}
+              <ThemeToggle />
+              <UserMenu 
+                userInfo={userInfo}
+                profileUrl={`/${userRole}/profile`}
+                onLogout={handleLogout}
+                userRole={userRole}
+              />
+            </div>
           </div>
         </div>
       </header>

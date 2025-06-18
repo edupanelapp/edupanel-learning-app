@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -9,11 +8,8 @@ import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthInd
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { GraduationCap, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-<<<<<<< HEAD
 import { Logo } from "@/components/ui/Logo"
-=======
 import { useAuth } from "@/hooks/useAuth"
->>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
 
 export default function Register() {
   const [searchParams] = useSearchParams()
@@ -112,22 +108,6 @@ export default function Register() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-<<<<<<< HEAD
-=======
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-2">
->>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"

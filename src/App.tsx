@@ -103,11 +103,8 @@ const App = () => (
                 <Route path="students" element={<FacultyStudents />} />
                 <Route path="approvals" element={<FacultyApprovals />} />
                 <Route path="profile" element={<FacultyProfile />} />
-<<<<<<< HEAD
                 <Route path="schedule" element={<FacultySchedule />} />
-=======
                 <Route path="verifications" element={<Verifications />} />
->>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
               </Route>
 
               {/* HOD Routes */}
@@ -119,11 +116,8 @@ const App = () => (
                 <Route path="students" element={<HODStudents />} />
                 <Route path="announcements" element={<HODAnnouncements />} />
                 <Route path="profile" element={<HODProfile />} />
-<<<<<<< HEAD
                 <Route path="reports" element={<Reports />} />
-=======
                 <Route path="verifications" element={<Verifications />} />
->>>>>>> c377a6e4ab08ddf39347c92fb3e6e7a963baccba
               </Route>
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
