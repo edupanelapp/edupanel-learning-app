@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
@@ -97,6 +96,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             const userProfile = await createUserProfile(session.user, 'student')
             setUser(userProfile)
+            
+            // Handle email verification redirect
+            if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
+              const currentPath = window.location.pathname
+              // Only redirect if we're on the root page (coming from email verification)
+              if (currentPath === '/') {
+                const urlParams = new URLSearchParams(window.location.search)
+                const redirectTo = urlParams.get('redirect_to')
+                
+                if (redirectTo) {
+                  window.location.href = redirectTo
+                } else {
+                  // Redirect to profile setup if profile is not complete
+                  if (!userProfile.profileComplete) {
+                    window.location.href = `/profile-setup?role=${userProfile.role}`
+                  } else {
+                    window.location.href = `/login?role=${userProfile.role}`
+                  }
+                }
+              }
+            }
           } catch (error) {
             console.error('Error creating user profile:', error)
             setUser(null)
@@ -122,7 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
     try {
-      const redirectUrl = `${window.location.origin}/`
+      // Set redirect URL to login page with role parameter
+      const redirectUrl = `${window.location.origin}/?redirect_to=${encodeURIComponent(`/login?role=${role}`)}`
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -139,11 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         return { error: error.message }
       }
-
-      toast({
-        title: "Registration Successful",
-        description: "Please check your email to verify your account.",
-      })
 
       return {}
     } catch (error: any) {

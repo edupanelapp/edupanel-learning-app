@@ -15,6 +15,7 @@ import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
 import ProfileSetup from "./pages/auth/ProfileSetup";
 import PendingApproval from "./pages/auth/PendingApproval";
+import EmailVerification from "./pages/auth/EmailVerification";
 import About from "./pages/About";
 import Features from "./pages/Features";
 import Contact from "./pages/Contact";
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/email-verification" element={<EmailVerification />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
               <Route path="/admin/verifications" element={<Verifications />} />

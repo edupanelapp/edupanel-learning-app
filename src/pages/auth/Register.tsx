@@ -59,8 +59,8 @@ export default function Register() {
       return
     }
 
-    // Success handled in useAuth hook
-    navigate(`/login?role=${role}`)
+    // Redirect to email verification page instead of login
+    navigate(`/email-verification?email=${encodeURIComponent(formData.email)}&role=${role}`)
   }
 
   const getRoleTitle = () => {
