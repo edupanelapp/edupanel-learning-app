@@ -9,35 +9,367 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      assignment_submissions: {
         Row: {
-          avatar_url: string | null
-          created_at: string | null
-          email: string
-          full_name: string | null
+          assignment_id: string | null
+          feedback: string | null
+          file_url: string | null
+          graded_at: string | null
           id: string
-          role: string
+          marks_obtained: number | null
+          status: string | null
+          student_id: string | null
+          submission_text: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          feedback?: string | null
+          file_url?: string | null
+          graded_at?: string | null
+          id?: string
+          marks_obtained?: number | null
+          status?: string | null
+          student_id?: string | null
+          submission_text?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          feedback?: string | null
+          file_url?: string | null
+          graded_at?: string | null
+          id?: string
+          marks_obtained?: number | null
+          status?: string | null
+          student_id?: string | null
+          submission_text?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          due_date: string
+          faculty_id: string | null
+          id: string
+          max_marks: number | null
+          subject_id: string | null
+          title: string
           updated_at: string | null
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string | null
-          email: string
-          full_name?: string | null
-          id: string
-          role: string
+          description?: string | null
+          due_date: string
+          faculty_id?: string | null
+          id?: string
+          max_marks?: number | null
+          subject_id?: string | null
+          title: string
           updated_at?: string | null
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string | null
-          email?: string
-          full_name?: string | null
+          description?: string | null
+          due_date?: string
+          faculty_id?: string | null
           id?: string
+          max_marks?: number | null
+          subject_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number | null
+          faculty_id: string | null
+          id: string
+          location: string | null
+          scheduled_at: string
+          subject_id: string | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          faculty_id?: string | null
+          id?: string
+          location?: string | null
+          scheduled_at: string
+          subject_id?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          faculty_id?: string | null
+          id?: string
+          location?: string | null
+          scheduled_at?: string
+          subject_id?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          recipient_id: string | null
+          sender_id: string | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          recipient_id?: string | null
+          sender_id?: string | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          recipient_id?: string | null
+          sender_id?: string | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          batch: string | null
+          created_at: string | null
+          department: string | null
+          designation: string | null
+          email: string
+          employee_id: string | null
+          experience_years: number | null
+          full_name: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          phone_number: string | null
+          qualification: string | null
+          role: string
+          semester: number | null
+          specialization: string | null
+          student_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          batch?: string | null
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id: string
+          phone_number?: string | null
+          qualification?: string | null
+          role: string
+          semester?: number | null
+          specialization?: string | null
+          student_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          batch?: string | null
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email?: string
+          employee_id?: string | null
+          experience_years?: number | null
+          full_name?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          phone_number?: string | null
+          qualification?: string | null
           role?: string
+          semester?: number | null
+          specialization?: string | null
+          student_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      student_subjects: {
+        Row: {
+          enrolled_at: string | null
+          id: string
+          student_id: string | null
+          subject_id: string | null
+        }
+        Insert: {
+          enrolled_at?: string | null
+          id?: string
+          student_id?: string | null
+          subject_id?: string | null
+        }
+        Update: {
+          enrolled_at?: string | null
+          id?: string
+          student_id?: string | null
+          subject_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subjects_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string | null
+          credits: number | null
+          department: string
+          description: string | null
+          faculty_id: string | null
+          id: string
+          name: string
+          semester: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          credits?: number | null
+          department: string
+          description?: string | null
+          faculty_id?: string | null
+          id?: string
+          name: string
+          semester?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          credits?: number | null
+          department?: string
+          description?: string | null
+          faculty_id?: string | null
+          id?: string
+          name?: string
+          semester?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

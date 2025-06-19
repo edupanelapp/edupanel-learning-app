@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -69,13 +70,39 @@ export default function ProfileSetup() {
     setIsLoading(true)
 
     try {
+      // Prepare the update data based on role
+      let updateData: any = {
+        full_name: formData.fullName,
+        phone_number: formData.phoneNumber,
+        address: formData.address,
+        department: formData.department,
+        updated_at: new Date().toISOString()
+      }
+
+      if (role === 'student') {
+        updateData = {
+          ...updateData,
+          student_id: formData.studentId,
+          semester: parseInt(formData.semester),
+          batch: formData.batch,
+          guardian_name: formData.guardianName,
+          guardian_phone: formData.guardianPhone
+        }
+      } else if (role === 'faculty') {
+        updateData = {
+          ...updateData,
+          employee_id: formData.employeeId,
+          designation: formData.designation,
+          qualification: formData.qualification,
+          experience_years: parseInt(formData.experienceYears),
+          specialization: formData.specialization
+        }
+      }
+
       // Update the user's profile in Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.fullName,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id)
 
       if (error) {
