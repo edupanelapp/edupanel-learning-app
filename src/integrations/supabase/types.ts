@@ -171,6 +171,50 @@ export type Database = {
           },
         ]
       }
+      faculty_profiles: {
+        Row: {
+          created_at: string | null
+          designation: string | null
+          employee_id: string | null
+          experience_years: number | null
+          id: string
+          qualification: string | null
+          specialization: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          designation?: string | null
+          employee_id?: string | null
+          experience_years?: number | null
+          id?: string
+          qualification?: string | null
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          designation?: string | null
+          employee_id?: string | null
+          experience_years?: number | null
+          id?: string
+          qualification?: string | null
+          specialization?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faculty_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -223,70 +267,84 @@ export type Database = {
         Row: {
           address: string | null
           avatar_url: string | null
-          batch: string | null
           created_at: string | null
           department: string | null
-          designation: string | null
           email: string
-          employee_id: string | null
-          experience_years: number | null
           full_name: string | null
-          guardian_name: string | null
-          guardian_phone: string | null
           id: string
           phone_number: string | null
-          qualification: string | null
           role: string
-          semester: number | null
-          specialization: string | null
-          student_id: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
-          batch?: string | null
           created_at?: string | null
           department?: string | null
-          designation?: string | null
           email: string
-          employee_id?: string | null
-          experience_years?: number | null
           full_name?: string | null
-          guardian_name?: string | null
-          guardian_phone?: string | null
           id: string
           phone_number?: string | null
-          qualification?: string | null
           role: string
-          semester?: number | null
-          specialization?: string | null
-          student_id?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
-          batch?: string | null
           created_at?: string | null
           department?: string | null
-          designation?: string | null
           email?: string
-          employee_id?: string | null
-          experience_years?: number | null
           full_name?: string | null
-          guardian_name?: string | null
-          guardian_phone?: string | null
           id?: string
           phone_number?: string | null
-          qualification?: string | null
           role?: string
-          semester?: number | null
-          specialization?: string | null
-          student_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      student_profiles: {
+        Row: {
+          batch: string | null
+          created_at: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          semester: number | null
+          student_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          batch?: string | null
+          created_at?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          semester?: number | null
+          student_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          batch?: string | null
+          created_at?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          semester?: number | null
+          student_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_subjects: {
         Row: {

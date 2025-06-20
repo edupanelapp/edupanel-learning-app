@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -47,7 +46,7 @@ export default function ProfileSetup() {
         guardianName: '',
         guardianPhone: ''
       })
-    } else if (role === 'faculty') {
+    } else if (role === 'faculty' || role === 'hod') {
       setFormData({
         fullName: user.name || '',
         employeeId: '',
@@ -70,8 +69,8 @@ export default function ProfileSetup() {
     setIsLoading(true)
 
     try {
-      // Prepare the update data based on role
-      let updateData: any = {
+      // Update base profile
+      const baseUpdateData = {
         full_name: formData.fullName,
         phone_number: formData.phoneNumber,
         address: formData.address,
@@ -79,34 +78,42 @@ export default function ProfileSetup() {
         updated_at: new Date().toISOString()
       }
 
-      if (role === 'student') {
-        updateData = {
-          ...updateData,
-          student_id: formData.studentId,
-          semester: parseInt(formData.semester),
-          batch: formData.batch,
-          guardian_name: formData.guardianName,
-          guardian_phone: formData.guardianPhone
-        }
-      } else if (role === 'faculty') {
-        updateData = {
-          ...updateData,
-          employee_id: formData.employeeId,
-          designation: formData.designation,
-          qualification: formData.qualification,
-          experience_years: parseInt(formData.experienceYears),
-          specialization: formData.specialization
-        }
-      }
-
-      // Update the user's profile in Supabase
-      const { error } = await supabase
+      const { error: baseError } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update(baseUpdateData)
         .eq('id', user.id)
 
-      if (error) {
-        throw error
+      if (baseError) throw baseError
+
+      // Update role-specific profile
+      if (role === 'student') {
+        const { error: studentError } = await supabase
+          .from('student_profiles')
+          .upsert({
+            user_id: user.id,
+            student_id: formData.studentId,
+            semester: parseInt(formData.semester),
+            batch: formData.batch,
+            guardian_name: formData.guardianName,
+            guardian_phone: formData.guardianPhone,
+            updated_at: new Date().toISOString()
+          })
+
+        if (studentError) throw studentError
+      } else if (role === 'faculty' || role === 'hod') {
+        const { error: facultyError } = await supabase
+          .from('faculty_profiles')
+          .upsert({
+            user_id: user.id,
+            employee_id: formData.employeeId,
+            designation: formData.designation,
+            qualification: formData.qualification,
+            experience_years: parseInt(formData.experienceYears),
+            specialization: formData.specialization,
+            updated_at: new Date().toISOString()
+          })
+
+        if (facultyError) throw facultyError
       }
 
       await checkProfileStatus()
@@ -318,7 +325,7 @@ export default function ProfileSetup() {
               </div>
 
               {role === 'student' && renderStudentFields()}
-              {role === 'faculty' && renderFacultyFields()}
+              {(role === 'faculty' || role === 'hod') && renderFacultyFields()}
 
               <div className="space-y-2">
                 <Label htmlFor="phoneNumber">Phone Number</Label>

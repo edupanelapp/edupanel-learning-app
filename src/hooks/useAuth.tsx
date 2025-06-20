@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const createUserProfile = async (authUser: User, role: 'student' | 'faculty' | 'hod'): Promise<UserProfile> => {
+  const createUserProfile = async (authUser: User): Promise<UserProfile> => {
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
@@ -61,6 +62,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (profile) {
+      // Check if role-specific profile exists
+      let roleProfileExists = false
+      if (profile.role === 'student') {
+        const { data: studentProfile } = await supabase
+          .from('student_profiles')
+          .select('id')
+          .eq('user_id', profile.id)
+          .single()
+        roleProfileExists = !!studentProfile
+      } else if (profile.role === 'faculty' || profile.role === 'hod') {
+        const { data: facultyProfile } = await supabase
+          .from('faculty_profiles')
+          .select('id')
+          .eq('user_id', profile.id)
+          .single()
+        roleProfileExists = !!facultyProfile
+      }
+
       return {
         id: profile.id,
         name: profile.full_name || authUser.email?.split('@')[0] || 'User',
@@ -68,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: profile.role as 'student' | 'faculty' | 'hod',
         avatar: profile.avatar_url,
         emailVerified: authUser.email_confirmed_at !== null,
-        profileComplete: !!profile.full_name,
+        profileComplete: !!(profile.full_name && roleProfileExists),
         approvalStatus: 'approved'
       }
     }
@@ -78,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: authUser.id,
       name: authUser.email?.split('@')[0] || 'User',
       email: authUser.email || '',
-      role: role,
+      role: (authUser.user_metadata?.role as 'student' | 'faculty' | 'hod') || 'student',
       emailVerified: authUser.email_confirmed_at !== null,
       profileComplete: false,
       approvalStatus: 'pending'
@@ -86,63 +105,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Set up auth state listener
+    let mounted = true
+
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
+        
+        if (!mounted) return
+
         setSession(session)
         
         if (session?.user) {
           try {
-            const userProfile = await createUserProfile(session.user, 'student')
-            setUser(userProfile)
-            
-            // Handle email verification redirect
-            if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
-              const currentPath = window.location.pathname
-              // Only redirect if we're on the root page (coming from email verification)
-              if (currentPath === '/') {
+            const userProfile = await createUserProfile(session.user)
+            if (mounted) {
+              setUser(userProfile)
+              
+              // Handle email verification completion
+              if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
+                const currentPath = window.location.pathname
                 const urlParams = new URLSearchParams(window.location.search)
                 const redirectTo = urlParams.get('redirect_to')
                 
-                if (redirectTo) {
-                  window.location.href = redirectTo
-                } else {
-                  // Redirect to profile setup if profile is not complete
-                  if (!userProfile.profileComplete) {
-                    window.location.href = `/profile-setup?role=${userProfile.role}`
+                // Only redirect if we're on auth-related pages
+                if (currentPath === '/' || currentPath.includes('/email-verification')) {
+                  if (redirectTo) {
+                    setTimeout(() => window.location.href = redirectTo, 100)
+                  } else if (!userProfile.profileComplete) {
+                    setTimeout(() => window.location.href = `/profile-setup?role=${userProfile.role}`, 100)
                   } else {
-                    window.location.href = `/login?role=${userProfile.role}`
+                    setTimeout(() => window.location.href = `/login?role=${userProfile.role}`, 100)
                   }
                 }
               }
             }
           } catch (error) {
             console.error('Error creating user profile:', error)
-            setUser(null)
+            if (mounted) setUser(null)
           }
         } else {
-          setUser(null)
+          if (mounted) setUser(null)
         }
         
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
     )
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      
       if (session?.user) {
-        createUserProfile(session.user, 'student').then(setUser).catch(console.error)
+        createUserProfile(session.user)
+          .then(profile => {
+            if (mounted) setUser(profile)
+          })
+          .catch(console.error)
       }
-      setLoading(false)
+      if (mounted) setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
     try {
-      // Set redirect URL to login page with role parameter
+      // Set redirect URL based on role for email verification
       const redirectUrl = `${window.location.origin}/?redirect_to=${encodeURIComponent(`/login?role=${role}`)}`
       
       const { error } = await supabase.auth.signUp({
