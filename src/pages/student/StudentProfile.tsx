@@ -5,22 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Mail, Phone, BookOpen, Calendar, Edit } from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
+import { useProfile } from "@/hooks/useProfile"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
-
-interface StudentProfileData {
-  full_name: string
-  email: string
-  phone_number: string
-  student_id: string
-  department: string
-  semester: number
-  batch: string
-  address: string
-  guardian_name: string
-  guardian_phone: string
-}
 
 interface SubjectData {
   id: string
@@ -30,44 +17,18 @@ interface SubjectData {
 }
 
 export default function StudentProfile() {
-  const { user } = useAuth()
+  const { profile, loading } = useProfile()
   const { toast } = useToast()
-  const [profileData, setProfileData] = useState<StudentProfileData | null>(null)
   const [enrolledSubjects, setEnrolledSubjects] = useState<SubjectData[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user) {
-      fetchProfileData()
+    if (profile) {
       fetchEnrolledSubjects()
     }
-  }, [user])
-
-  const fetchProfileData = async () => {
-    if (!user) return
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (error) throw error
-
-      setProfileData(data)
-    } catch (error: any) {
-      console.error('Error fetching profile:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load profile data",
-        variant: "destructive"
-      })
-    }
-  }
+  }, [profile])
 
   const fetchEnrolledSubjects = async () => {
-    if (!user) return
+    if (!profile?.id) return
 
     try {
       const { data, error } = await supabase
@@ -80,7 +41,7 @@ export default function StudentProfile() {
             credits
           )
         `)
-        .eq('student_id', user.id)
+        .eq('student_id', profile.id)
 
       if (error) throw error
 
@@ -93,12 +54,10 @@ export default function StudentProfile() {
         description: "Failed to load enrolled subjects",
         variant: "destructive"
       })
-    } finally {
-      setLoading(false)
     }
   }
 
-  if (loading || !profileData) {
+  if (loading || !profile) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center min-h-[200px]">
@@ -107,6 +66,19 @@ export default function StudentProfile() {
       </div>
     )
   }
+
+  // Type guard to check if profile has student-specific properties
+  const isStudentProfile = (prof: any): prof is typeof profile & {
+    student_id?: string
+    semester?: number
+    batch?: string
+    guardian_name?: string
+    guardian_phone?: string
+  } => {
+    return prof && prof.role === 'student'
+  }
+
+  const studentProfile = isStudentProfile(profile) ? profile : null
 
   return (
     <div className="space-y-6">
@@ -126,33 +98,35 @@ export default function StudentProfile() {
         <Card className="lg:col-span-1">
           <CardHeader className="text-center">
             <Avatar className="w-24 h-24 mx-auto mb-4">
-              <AvatarImage src={user?.avatar || ""} alt={profileData.full_name} />
+              <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || ""} />
               <AvatarFallback className="text-lg">
-                {profileData.full_name?.split(' ').map(n => n[0]).join('') || 'ST'}
+                {profile.full_name?.split(' ').map(n => n[0]).join('') || 'ST'}
               </AvatarFallback>
             </Avatar>
-            <CardTitle>{profileData.full_name || 'Student'}</CardTitle>
-            <CardDescription>{profileData.student_id}</CardDescription>
+            <CardTitle>{profile.full_name || 'Student'}</CardTitle>
+            <CardDescription>{studentProfile?.student_id || 'Student ID'}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{profileData.email}</span>
+              <span className="text-sm">{profile.email}</span>
             </div>
-            {profileData.phone_number && (
+            {profile.phone_number && (
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{profileData.phone_number}</span>
+                <span className="text-sm">{profile.phone_number}</span>
               </div>
             )}
             <div className="flex items-center space-x-2">
               <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{profileData.department}</span>
+              <span className="text-sm">{profile.department || 'Department'}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Semester {profileData.semester}</span>
-            </div>
+            {studentProfile?.semester && (
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Semester {studentProfile.semester}</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -175,7 +149,7 @@ export default function StudentProfile() {
                 <div className="text-sm text-muted-foreground">Total Credits</div>
               </div>
               <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary">{profileData.semester}</div>
+                <div className="text-2xl font-bold text-primary">{studentProfile?.semester || 'N/A'}</div>
                 <div className="text-sm text-muted-foreground">Current Semester</div>
               </div>
             </div>
@@ -197,15 +171,15 @@ export default function StudentProfile() {
 
             <div>
               <h3 className="font-semibold mb-2">Batch Information</h3>
-              <p className="text-muted-foreground">{profileData.batch || 'Not specified'}</p>
+              <p className="text-muted-foreground">{studentProfile?.batch || 'Not specified'}</p>
             </div>
 
-            {profileData.guardian_name && (
+            {studentProfile?.guardian_name && (
               <div>
                 <h3 className="font-semibold mb-2">Guardian Information</h3>
                 <p className="text-muted-foreground">
-                  {profileData.guardian_name}
-                  {profileData.guardian_phone && ` - ${profileData.guardian_phone}`}
+                  {studentProfile.guardian_name}
+                  {studentProfile.guardian_phone && ` - ${studentProfile.guardian_phone}`}
                 </p>
               </div>
             )}

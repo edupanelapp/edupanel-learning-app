@@ -73,8 +73,20 @@ export default function HODProfile() {
     )
   }
 
-  const qualifications = profile.qualification ? profile.qualification.split(',').map(q => q.trim()) : []
-  const specializations = profile.specialization ? profile.specialization.split(',').map(s => s.trim()) : []
+  // Type guard to check if profile has faculty-specific properties
+  const isFacultyProfile = (prof: any): prof is typeof profile & {
+    qualification?: string
+    specialization?: string
+    designation?: string
+    employee_id?: string
+    experience_years?: number
+  } => {
+    return prof && (prof.role === 'faculty' || prof.role === 'hod')
+  }
+
+  const facultyProfile = isFacultyProfile(profile) ? profile : null
+  const qualifications = facultyProfile?.qualification ? facultyProfile.qualification.split(',').map(q => q.trim()) : []
+  const specializations = facultyProfile?.specialization ? facultyProfile.specialization.split(',').map(s => s.trim()) : []
 
   return (
     <div className="space-y-6">
@@ -100,7 +112,7 @@ export default function HODProfile() {
               </AvatarFallback>
             </Avatar>
             <CardTitle>{profile.full_name || 'HOD'}</CardTitle>
-            <CardDescription>{profile.designation || 'Head of Department'}</CardDescription>
+            <CardDescription>{facultyProfile?.designation || 'Head of Department'}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -113,10 +125,10 @@ export default function HODProfile() {
                 <span className="text-sm">{profile.phone_number}</span>
               </div>
             )}
-            {profile.employee_id && (
+            {facultyProfile?.employee_id && (
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{profile.employee_id}</span>
+                <span className="text-sm">{facultyProfile.employee_id}</span>
               </div>
             )}
             <div className="flex items-center space-x-2">
@@ -170,10 +182,10 @@ export default function HODProfile() {
               </div>
             )}
 
-            {profile.experience_years && (
+            {facultyProfile?.experience_years && (
               <div>
                 <h3 className="font-semibold mb-2">Experience</h3>
-                <p className="text-muted-foreground">{profile.experience_years} years in academia and administration</p>
+                <p className="text-muted-foreground">{facultyProfile.experience_years} years in academia and administration</p>
               </div>
             )}
           </CardContent>
