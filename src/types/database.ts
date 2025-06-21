@@ -1,178 +1,176 @@
 
-// Database types for the educational platform
-
 export interface Department {
   id: string
   name: string
   code: string
-  description?: string
-  head_of_department_id?: string
-  established_year?: number
-  total_faculty?: number
-  total_students?: number
-  contact_email?: string
-  contact_phone?: string
-  location?: string
-  created_at: string
-  updated_at: string
+  description: string | null
+  head_of_department_id: string | null
+  established_year: number | null
+  total_faculty: number | null
+  total_students: number | null
+  contact_email: string | null
+  contact_phone: string | null
+  location: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface Course {
   id: string
   name: string
   code: string
-  description?: string
-  department_id?: string
+  description: string | null
+  department_id: string | null
   duration_years: number
-  degree_type?: 'Bachelor' | 'Master' | 'PhD' | 'Diploma' | 'Certificate'
-  credits_required?: number
-  eligibility_criteria?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  degree_type: string | null
+  credits_required: number | null
+  eligibility_criteria: string | null
+  is_active: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface Semester {
   id: string
-  course_id?: string
+  course_id: string | null
   semester_number: number
   name: string
-  description?: string
-  start_date?: string
-  end_date?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  description: string | null
+  start_date: string | null
+  end_date: string | null
+  is_active: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface SubjectChapter {
   id: string
-  subject_id?: string
+  subject_id: string | null
   chapter_number: number
   title: string
-  description?: string
-  learning_objectives?: string
-  estimated_hours?: number
-  difficulty_level?: 'Beginner' | 'Intermediate' | 'Advanced'
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  description: string | null
+  learning_objectives: string | null
+  estimated_hours: number | null
+  difficulty_level: string | null
+  is_active: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface ChapterTopic {
   id: string
-  chapter_id?: string
+  chapter_id: string | null
   topic_number: number
   title: string
-  description?: string
-  content?: string
-  key_points?: string[]
-  examples?: string
-  estimated_duration?: number
-  difficulty_level?: 'Beginner' | 'Intermediate' | 'Advanced'
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  description: string | null
+  content: string | null
+  key_points: string[] | null
+  examples: string | null
+  estimated_duration: number | null
+  difficulty_level: string | null
+  is_active: boolean | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface TopicMaterial {
   id: string
-  topic_id?: string
-  material_type: 'pdf' | 'text' | 'video' | 'image' | 'link' | 'audio'
+  topic_id: string | null
+  material_type: string
   title: string
-  description?: string
-  file_url?: string
-  content?: string
-  video_url?: string
-  duration?: number
-  file_size?: number
-  mime_type?: string
-  tags?: string[]
-  is_downloadable: boolean
-  access_level?: 'public' | 'student' | 'faculty' | 'premium'
-  uploaded_by?: string
-  created_at: string
-  updated_at: string
+  description: string | null
+  file_url: string | null
+  content: string | null
+  video_url: string | null
+  duration: number | null
+  file_size: number | null
+  mime_type: string | null
+  tags: string[] | null
+  is_downloadable: boolean | null
+  access_level: string | null
+  uploaded_by: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface ProjectIdea {
   id: string
   title: string
   description: string
-  subject_id?: string
-  topic_id?: string
-  difficulty_level: 'Beginner' | 'Intermediate' | 'Advanced'
-  estimated_duration?: string
-  technologies_used?: string[]
-  prerequisites?: string[]
-  learning_outcomes?: string[]
-  detailed_requirements?: string
-  sample_code_url?: string
-  reference_links?: string[]
-  max_team_size?: number
-  min_team_size?: number
-  is_group_project: boolean
-  created_by?: string
-  target_semester?: number
-  department_id?: string
-  status?: 'draft' | 'published' | 'archived'
-  tags?: string[]
-  created_at: string
-  updated_at: string
+  subject_id: string | null
+  topic_id: string | null
+  difficulty_level: string
+  estimated_duration: string | null
+  technologies_used: string[] | null
+  prerequisites: string[] | null
+  learning_outcomes: string[] | null
+  detailed_requirements: string | null
+  sample_code_url: string | null
+  reference_links: string[] | null
+  max_team_size: number | null
+  min_team_size: number | null
+  is_group_project: boolean | null
+  created_by: string | null
+  target_semester: number | null
+  department_id: string | null
+  status: string | null
+  tags: string[] | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface AssignmentUpdate {
   id: string
-  assignment_id?: string
-  student_id?: string
-  submission_id?: string
-  update_type: 'submitted' | 'reviewed' | 'graded' | 'returned' | 'resubmitted'
-  status?: 'pending' | 'in_review' | 'graded' | 'returned' | 'completed'
-  marks_awarded?: number
-  feedback?: string
-  attachments?: string[]
-  updated_by?: string
-  remarks?: string
-  created_at: string
+  assignment_id: string | null
+  student_id: string | null
+  submission_id: string | null
+  update_type: string
+  status: string | null
+  marks_awarded: number | null
+  feedback: string | null
+  attachments: string[] | null
+  updated_by: string | null
+  remarks: string | null
+  created_at: string | null
 }
 
 export interface ClassSchedule {
   id: string
-  subject_id?: string
-  faculty_id?: string
-  semester_id?: string
+  subject_id: string | null
+  faculty_id: string | null
+  semester_id: string | null
   section: string
-  day_of_week?: number
+  day_of_week: number | null
   start_time: string
   end_time: string
-  classroom?: string
-  class_type?: 'lecture' | 'lab' | 'tutorial' | 'practical' | 'seminar'
-  recurring_pattern?: 'weekly' | 'biweekly' | 'monthly' | 'once'
+  classroom: string | null
+  class_type: string | null
+  recurring_pattern: string | null
   start_date: string
-  end_date?: string
-  is_active: boolean
-  notes?: string
-  created_at: string
-  updated_at: string
+  end_date: string | null
+  is_active: boolean | null
+  notes: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface StudentProgress {
   id: string
-  student_id?: string
-  subject_id?: string
-  chapter_id?: string
-  topic_id?: string
-  progress_type: 'chapter_completed' | 'topic_completed' | 'assignment_submitted' | 'quiz_completed' | 'material_viewed'
-  completion_percentage?: number
-  time_spent?: number
-  score?: number
-  max_score?: number
-  attempts?: number
-  last_accessed?: string
-  notes?: string
-  milestones_achieved?: string[]
-  areas_of_improvement?: string[]
-  strengths?: string[]
-  created_at: string
-  updated_at: string
+  student_id: string | null
+  subject_id: string | null
+  chapter_id: string | null
+  topic_id: string | null
+  progress_type: string
+  completion_percentage: number | null
+  time_spent: number | null
+  score: number | null
+  max_score: number | null
+  attempts: number | null
+  last_accessed: string | null
+  notes: string | null
+  milestones_achieved: string[] | null
+  areas_of_improvement: string[] | null
+  strengths: string[] | null
+  created_at: string | null
+  updated_at: string | null
 }
