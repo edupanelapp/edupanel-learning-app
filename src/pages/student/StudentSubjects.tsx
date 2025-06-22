@@ -3,11 +3,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { BookOpen, Play, FileText, Users } from "lucide-react"
+import { BookOpen, Play, FileText, Clock } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useNavigate } from "react-router-dom"
 
 interface SubjectData {
   id: string
@@ -17,13 +17,16 @@ interface SubjectData {
   credits: number
   faculty: {
     full_name: string
-  }
+  } | null
   assignmentCount: number
+  materialCount: number
+  progressPercentage: number
 }
 
 export default function StudentSubjects() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
   const [subjects, setSubjects] = useState<SubjectData[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -55,25 +58,47 @@ export default function StudentSubjects() {
 
       if (error) throw error
 
-      // Get assignment counts for each subject
-      const subjectsWithAssignments = await Promise.all(
+      const subjectsWithDetails = await Promise.all(
         (data || []).map(async (item) => {
           const subject = item.subjects
           if (!subject) return null
 
-          const { count } = await supabase
+          // Get assignment count
+          const { count: assignmentCount } = await supabase
             .from('assignments')
             .select('*', { count: 'exact', head: true })
             .eq('subject_id', subject.id)
 
+          // Get material count
+          const { count: materialCount } = await supabase
+            .from('topic_materials')
+            .select('tm.*', { count: 'exact', head: true })
+            .from('topic_materials as tm')
+            .innerJoin('chapter_topics as ct', 'tm.topic_id', 'ct.id')
+            .innerJoin('subject_chapters as sc', 'ct.chapter_id', 'sc.id')
+            .eq('sc.subject_id', subject.id)
+
+          // Get progress percentage
+          const { data: progressData } = await supabase
+            .from('student_progress')
+            .select('completion_percentage')
+            .eq('student_id', user.id)
+            .eq('subject_id', subject.id)
+
+          const avgProgress = progressData?.length 
+            ? progressData.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / progressData.length
+            : 0
+
           return {
             ...subject,
-            assignmentCount: count || 0
+            assignmentCount: assignmentCount || 0,
+            materialCount: materialCount || 0,
+            progressPercentage: Math.round(avgProgress)
           }
         })
       )
 
-      setSubjects(subjectsWithAssignments.filter(Boolean) as SubjectData[])
+      setSubjects(subjectsWithDetails.filter(Boolean) as SubjectData[])
     } catch (error: any) {
       console.error('Error fetching subjects:', error)
       toast({
@@ -84,6 +109,14 @@ export default function StudentSubjects() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleViewSubject = (subjectId: string) => {
+    navigate(`/student/subjects/${subjectId}`)
+  }
+
+  const handleViewAssignments = (subjectId: string) => {
+    navigate(`/student/assignments?subject=${subjectId}`)
   }
 
   if (loading) {
@@ -100,28 +133,40 @@ export default function StudentSubjects() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">My Subjects</h1>
-          <p className="text-muted-foreground">Continue your learning journey across all enrolled subjects</p>
+          <h1 className="text-3xl font-bold text-primary">My Subjects</h1>
+          <p className="text-muted-foreground">Continue your learning journey across all enrolled subjects at CCSA</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subjects.map((subject) => (
-          <Card key={subject.id} className="hover:shadow-lg transition-shadow">
-            <div className="aspect-video overflow-hidden rounded-t-lg relative bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+          <Card key={subject.id} className="hover:shadow-lg transition-shadow border-primary/20">
+            <div className="aspect-video overflow-hidden rounded-t-lg relative bg-gradient-to-br from-primary/10 to-secondary/10">
               <div className="absolute inset-0 flex items-center justify-center">
-                <BookOpen className="h-16 w-16 text-blue-500" />
+                <BookOpen className="h-16 w-16 text-primary" />
               </div>
-              <Badge className="absolute top-2 right-2 bg-blue-500">
+              <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
                 {subject.credits} Credits
               </Badge>
+              <div className="absolute bottom-2 left-2 right-2">
+                <div className="bg-background/90 rounded p-2">
+                  <div className="text-xs text-muted-foreground mb-1">Progress</div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${subject.progressPercentage}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-primary font-medium mt-1">{subject.progressPercentage}% Complete</div>
+                </div>
+              </div>
             </div>
             <CardHeader>
-              <CardTitle className="text-lg">{subject.name}</CardTitle>
+              <CardTitle className="text-lg text-primary">{subject.name}</CardTitle>
               <CardDescription className="space-y-1">
-                <div>Code: {subject.code}</div>
+                <div>Code: <span className="text-primary font-medium">{subject.code}</span></div>
                 {subject.faculty?.full_name && (
-                  <div>Faculty: {subject.faculty.full_name}</div>
+                  <div>Faculty: <span className="text-primary font-medium">{subject.faculty.full_name}</span></div>
                 )}
               </CardDescription>
             </CardHeader>
@@ -132,19 +177,32 @@ export default function StudentSubjects() {
                 </p>
               )}
               
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center space-x-1">
-                  <FileText className="h-4 w-4" />
-                  <span>{subject.assignmentCount} Assignments</span>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    <span>{subject.assignmentCount} Assignments</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{subject.materialCount} Materials</span>
+                  </div>
                 </div>
               </div>
               
               <div className="flex space-x-2">
-                <Button className="flex-1">
+                <Button 
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  onClick={() => handleViewSubject(subject.id)}
+                >
                   <Play className="h-4 w-4 mr-2" />
-                  View Details
+                  View Content
                 </Button>
-                <Button variant="outline" size="icon">
+                <Button 
+                  variant="outline" 
+                  className="border-primary text-primary hover:bg-primary/10"
+                  onClick={() => handleViewAssignments(subject.id)}
+                >
                   <FileText className="h-4 w-4" />
                 </Button>
               </div>
@@ -154,11 +212,11 @@ export default function StudentSubjects() {
       </div>
 
       {subjects.length === 0 && (
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 border-primary/20">
           <CardContent>
-            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No subjects enrolled</h3>
-            <p className="text-muted-foreground">Contact your academic advisor to enroll in subjects.</p>
+            <BookOpen className="h-12 w-12 mx-auto text-primary mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-primary">No subjects enrolled</h3>
+            <p className="text-muted-foreground">Contact your academic advisor to enroll in subjects for CCSA.</p>
           </CardContent>
         </Card>
       )}

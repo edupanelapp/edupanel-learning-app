@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,45 +14,206 @@ import {
   Calendar,
   Bell
 } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/hooks/use-toast"
+
+interface SubjectProgress {
+  id: string
+  name: string
+  code: string
+  progress: number
+  newMaterials: number
+}
+
+interface RecentLearning {
+  title: string
+  subject: string
+  date: string
+}
+
+interface Assignment {
+  id: string
+  title: string
+  subject: string
+  dueDate: string
+  status: string
+}
+
+interface ClassSchedule {
+  time: string
+  subject: string
+  faculty: string
+}
+
+interface Notification {
+  title: string
+  message: string
+  time: string
+}
 
 export default function StudentDashboard() {
-  const subjects = [
-    { name: "Data Structures", progress: 75, newMaterials: 3 },
-    { name: "Web Development", progress: 60, newMaterials: 2 },
-    { name: "Database Systems", progress: 90, newMaterials: 0 },
-    { name: "Software Engineering", progress: 45, newMaterials: 5 },
-  ]
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [subjects, setSubjects] = useState<SubjectProgress[]>([])
+  const [recentLearnings, setRecentLearnings] = useState<RecentLearning[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [todayClasses, setTodayClasses] = useState<ClassSchedule[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const recentLearnings = [
-    { title: "Arrays and Linked Lists", subject: "Data Structures", date: "2 hours ago" },
-    { title: "React Components", subject: "Web Development", date: "1 day ago" },
-    { title: "SQL Joins", subject: "Database Systems", date: "2 days ago" },
-  ]
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData()
+    }
+  }, [user])
 
-  const assignments = [
-    { title: "Binary Search Implementation", subject: "Data Structures", dueDate: "Tomorrow", status: "pending" },
-    { title: "React Portfolio Project", subject: "Web Development", dueDate: "3 days", status: "in-progress" },
-    { title: "Database Design", subject: "Database Systems", dueDate: "1 week", status: "submitted" },
-  ]
+  const fetchDashboardData = async () => {
+    if (!user) return
 
-  const todayClasses = [
-    { time: "9:00 AM", subject: "Data Structures", faculty: "Dr. Smith" },
-    { time: "11:00 AM", subject: "Web Development", faculty: "Prof. Johnson" },
-    { time: "2:00 PM", subject: "Software Engineering", faculty: "Dr. Wilson" },
-  ]
+    try {
+      // Fetch enrolled subjects with progress
+      const { data: enrolledSubjects } = await supabase
+        .from('student_subjects')
+        .select(`
+          subjects:subject_id (
+            id,
+            name,
+            code
+          )
+        `)
+        .eq('student_id', user.id)
+
+      // Fetch progress for each subject
+      const subjectsWithProgress = await Promise.all(
+        (enrolledSubjects || []).map(async (item) => {
+          const subject = item.subjects
+          if (!subject) return null
+
+          // Get progress percentage
+          const { data: progress } = await supabase
+            .from('student_progress')
+            .select('completion_percentage')
+            .eq('student_id', user.id)
+            .eq('subject_id', subject.id)
+
+          const avgProgress = progress?.length 
+            ? progress.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / progress.length
+            : 0
+
+          // Get new materials count
+          const { count: materialsCount } = await supabase
+            .from('topic_materials')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+
+          return {
+            id: subject.id,
+            name: subject.name,
+            code: subject.code,
+            progress: Math.round(avgProgress),
+            newMaterials: materialsCount || 0
+          }
+        })
+      )
+
+      setSubjects(subjectsWithProgress.filter(Boolean) as SubjectProgress[])
+
+      // Fetch recent assignments
+      const { data: assignmentsData } = await supabase
+        .from('assignments')
+        .select(`
+          id,
+          title,
+          due_date,
+          subjects:subject_id (name),
+          assignment_submissions:assignment_submissions(status)
+        `)
+        .in('subject_id', enrolledSubjects?.map(s => s.subjects?.id).filter(Boolean) || [])
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      const assignmentsWithStatus = assignmentsData?.map(assignment => ({
+        id: assignment.id,
+        title: assignment.title,
+        subject: assignment.subjects?.name || 'Unknown',
+        dueDate: new Date(assignment.due_date).toLocaleDateString(),
+        status: assignment.assignment_submissions?.[0]?.status || 'pending'
+      })) || []
+
+      setAssignments(assignmentsWithStatus)
+
+      // Fetch today's classes
+      const today = new Date().getDay()
+      const { data: classesData } = await supabase
+        .from('class_schedule')
+        .select(`
+          start_time,
+          subjects:subject_id (name),
+          profiles:faculty_id (full_name)
+        `)
+        .eq('day_of_week', today)
+        .eq('is_active', true)
+        .in('subject_id', enrolledSubjects?.map(s => s.subjects?.id).filter(Boolean) || [])
+
+      const todayClassesFormatted = classesData?.map(cls => ({
+        time: cls.start_time,
+        subject: cls.subjects?.name || 'Unknown',
+        faculty: cls.profiles?.full_name || 'TBD'
+      })) || []
+
+      setTodayClasses(todayClassesFormatted)
+
+      // Fetch recent notifications
+      const { data: notificationsData } = await supabase
+        .from('notifications')
+        .select('title, message, created_at')
+        .or(`recipient_id.eq.${user.id},target_audience.eq.students,target_audience.eq.all`)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+      const notificationsFormatted = notificationsData?.map(notif => ({
+        title: notif.title,
+        message: notif.message,
+        time: new Date(notif.created_at).toLocaleDateString()
+      })) || []
+
+      setNotifications(notificationsFormatted)
+
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-lg">Loading dashboard...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back, Alex! 👋</h1>
-        <p className="text-muted-foreground">Continue your learning journey and track your progress.</p>
+        <h1 className="text-3xl font-bold text-primary mb-2">Welcome back, {user?.name}! 👋</h1>
+        <p className="text-muted-foreground">Continue your learning journey at CCSA and track your progress.</p>
       </div>
 
       {/* Subject Progress Panel */}
-      <Card>
+      <Card className="border-primary/20">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-primary">
             <BookOpen className="h-5 w-5 mr-2" />
             Subject Progress
           </CardTitle>
@@ -59,11 +221,11 @@ export default function StudentDashboard() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {subjects.map((subject, index) => (
-              <div key={index} className="p-4 border rounded-lg">
+              <div key={index} className="p-4 border rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-sm">{subject.name}</h3>
+                  <h3 className="font-medium text-sm text-primary">{subject.name}</h3>
                   {subject.newMaterials > 0 && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
                       {subject.newMaterials} new
                     </Badge>
                   )}
@@ -77,48 +239,15 @@ export default function StudentDashboard() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Learnings */}
-        <Card>
+        {/* Recent Assignments */}
+        <Card className="border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center">
-                <BookOpen className="h-5 w-5 mr-2" />
-                Recent Learnings
-              </span>
-              <Button variant="ghost" size="sm">
-                View All <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentLearnings.map((learning, index) => (
-                <div key={index} className="flex items-start justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-sm">{learning.title}</h4>
-                    <p className="text-xs text-muted-foreground">{learning.subject}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">{learning.date}</p>
-                    <Button size="sm" variant="outline" className="mt-1">
-                      Continue
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Assignments Overview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-primary">
               <span className="flex items-center">
                 <FileText className="h-5 w-5 mr-2" />
                 Recent Assignments
               </span>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
                 View All <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </CardTitle>
@@ -126,7 +255,7 @@ export default function StudentDashboard() {
           <CardContent>
             <div className="space-y-3">
               {assignments.map((assignment, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
                   <div>
                     <h4 className="font-medium text-sm">{assignment.title}</h4>
                     <p className="text-xs text-muted-foreground">{assignment.subject}</p>
@@ -147,77 +276,58 @@ export default function StudentDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Class Schedule */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Class Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="today" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
-              <TabsTrigger value="today">Today</TabsTrigger>
-              <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
-            </TabsList>
-            <TabsContent value="today" className="space-y-4">
-              <div className="grid gap-3">
-                {todayClasses.map((classItem, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
-                        <Clock className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium">{classItem.subject}</h4>
-                        <p className="text-sm text-muted-foreground">{classItem.faculty}</p>
-                      </div>
+        {/* Today's Classes */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center text-primary">
+              <Calendar className="h-5 w-5 mr-2" />
+              Today's Classes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {todayClasses.map((classItem, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
+                      <Clock className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{classItem.time}</p>
-                      <Button size="sm" variant="outline">
-                        Join Class
-                      </Button>
+                    <div>
+                      <h4 className="font-medium">{classItem.subject}</h4>
+                      <p className="text-sm text-muted-foreground">{classItem.faculty}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-              <Button variant="outline" className="w-full">
-                View Full Schedule
-              </Button>
-            </TabsContent>
-            <TabsContent value="yesterday">
-              <p className="text-center text-muted-foreground py-8">No classes yesterday</p>
-            </TabsContent>
-            <TabsContent value="tomorrow">
-              <p className="text-center text-muted-foreground py-8">No classes scheduled for tomorrow</p>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                  <div className="text-right">
+                    <p className="font-medium text-primary">{classItem.time}</p>
+                    <Button size="sm" variant="outline" className="mt-1 border-primary text-primary hover:bg-primary/10">
+                      Join Class
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Announcements */}
-      <Card>
+      <Card className="border-primary/20">
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center text-primary">
             <Bell className="h-5 w-5 mr-2" />
-            Announcements
+            Recent Announcements
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="p-3 border rounded-lg">
-              <h4 className="font-medium text-sm">Mid-term Examination Schedule Released</h4>
-              <p className="text-xs text-muted-foreground mt-1">Check your exam dates and prepare accordingly. Posted 2 hours ago.</p>
-            </div>
-            <div className="p-3 border rounded-lg">
-              <h4 className="font-medium text-sm">New Study Materials Available</h4>
-              <p className="text-xs text-muted-foreground mt-1">Additional resources have been uploaded for Web Development course. Posted 1 day ago.</p>
-            </div>
+            {notifications.map((notification, index) => (
+              <div key={index} className="p-3 border rounded-lg hover:bg-primary/5">
+                <h4 className="font-medium text-sm text-primary">{notification.title}</h4>
+                <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                <p className="text-xs text-muted-foreground mt-1">Posted {notification.time}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

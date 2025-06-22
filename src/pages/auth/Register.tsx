@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { GraduationCap, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/ui/Logo"
 import { useAuth } from "@/hooks/useAuth"
@@ -21,7 +22,8 @@ export default function Register() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    fullName: ""
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -46,6 +48,15 @@ export default function Register() {
       return
     }
 
+    if (!formData.fullName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your full name",
+        variant: "destructive"
+      })
+      return
+    }
+
     setIsLoading(true)
     const { error } = await register(formData.email, formData.password, role)
     setIsLoading(false)
@@ -59,25 +70,24 @@ export default function Register() {
       return
     }
 
-    // Redirect to email verification page instead of login
     navigate(`/email-verification?email=${encodeURIComponent(formData.email)}&role=${role}`)
   }
 
   const getRoleTitle = () => {
     switch (role) {
-      case "student": return "Student Registration"
-      case "faculty": return "Faculty Registration" 
-      case "hod": return "HOD Registration"
-      default: return "Registration"
+      case "student": return "Student Registration - CCSA"
+      case "faculty": return "Faculty Registration - CCSA" 
+      case "hod": return "HOD Registration - CCSA"
+      default: return "Registration - CCSA"
     }
   }
 
   const getRoleDescription = () => {
     switch (role) {
-      case "student": return "Create your student account to access courses and assignments"
-      case "faculty": return "Join as faculty to manage courses and mentor students"
-      case "hod": return "Department head registration (admin approval required)"
-      default: return "Create your account"
+      case "student": return "Join Centre for Computer Science & Application as a student"
+      case "faculty": return "Join CCSA as faculty to teach and mentor students"
+      case "hod": return "Department head registration for CCSA"
+      default: return "Join CCSA"
     }
   }
 
@@ -107,6 +117,19 @@ export default function Register() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -145,6 +168,10 @@ export default function Register() {
                   required
                   disabled={isLoading}
                 />
+              </div>
+
+              <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
+                <strong>Department:</strong> Centre for Computer Science & Application (CCSA)
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>

@@ -92,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // If no profile exists, it will be created by the trigger
     return {
       id: authUser.id,
       name: authUser.email?.split('@')[0] || 'User',
@@ -107,7 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
@@ -122,13 +120,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (mounted) {
               setUser(userProfile)
               
-              // Handle email verification completion
               if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
                 const currentPath = window.location.pathname
                 const urlParams = new URLSearchParams(window.location.search)
                 const redirectTo = urlParams.get('redirect_to')
                 
-                // Only redirect if we're on auth-related pages
                 if (currentPath === '/' || currentPath.includes('/email-verification')) {
                   if (redirectTo) {
                     setTimeout(() => window.location.href = redirectTo, 100)
@@ -152,7 +148,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return
       
@@ -174,7 +169,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
     try {
-      // Set redirect URL based on role for email verification
       const redirectUrl = `${window.location.origin}/?redirect_to=${encodeURIComponent(`/login?role=${role}`)}`
       
       const { error } = await supabase.auth.signUp({
@@ -184,7 +178,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: redirectUrl,
           data: {
             role: role,
-            full_name: ''
+            full_name: '',
+            department: 'Centre for Computer Science & Application'
           }
         }
       })
