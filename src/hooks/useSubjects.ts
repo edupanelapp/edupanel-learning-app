@@ -15,9 +15,18 @@ interface Subject {
   faculty_id: string | null
   created_at: string
   updated_at: string
+  // These are computed fields, not in database
   studentCount?: number
   chaptersCount?: number
   assignmentsCount?: number
+}
+
+interface CreateSubjectData {
+  name: string
+  code: string
+  description?: string
+  credits: number
+  semester: number
 }
 
 export function useSubjects() {
@@ -50,14 +59,18 @@ export function useSubjects() {
     }
   }
 
-  const createSubject = async (subjectData: Partial<Subject>) => {
+  const createSubject = async (subjectData: CreateSubjectData) => {
     if (!user) return
 
     try {
       const { data, error } = await supabase
         .from('subjects')
         .insert({
-          ...subjectData,
+          name: subjectData.name,
+          code: subjectData.code,
+          description: subjectData.description || null,
+          credits: subjectData.credits,
+          semester: subjectData.semester,
           faculty_id: user.id,
           department: 'Centre for Computer Science & Application'
         })
@@ -84,11 +97,17 @@ export function useSubjects() {
     }
   }
 
-  const updateSubject = async (id: string, updates: Partial<Subject>) => {
+  const updateSubject = async (id: string, updates: Partial<CreateSubjectData>) => {
     try {
       const { error } = await supabase
         .from('subjects')
-        .update(updates)
+        .update({
+          name: updates.name,
+          code: updates.code,
+          description: updates.description || null,
+          credits: updates.credits,
+          semester: updates.semester
+        })
         .eq('id', id)
 
       if (error) throw error
