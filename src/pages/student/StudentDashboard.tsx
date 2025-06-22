@@ -26,12 +26,6 @@ interface SubjectProgress {
   newMaterials: number
 }
 
-interface RecentLearning {
-  title: string
-  subject: string
-  date: string
-}
-
 interface Assignment {
   id: string
   title: string
@@ -56,7 +50,6 @@ export default function StudentDashboard() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [subjects, setSubjects] = useState<SubjectProgress[]>([])
-  const [recentLearnings, setRecentLearnings] = useState<RecentLearning[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [todayClasses, setTodayClasses] = useState<ClassSchedule[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -101,11 +94,14 @@ export default function StudentDashboard() {
             ? progress.reduce((sum, p) => sum + (p.completion_percentage || 0), 0) / progress.length
             : 0
 
-          // Get new materials count
+          // Get new materials count (last 7 days)
+          const oneWeekAgo = new Date()
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+          
           const { count: materialsCount } = await supabase
             .from('topic_materials')
             .select('*', { count: 'exact', head: true })
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+            .gte('created_at', oneWeekAgo.toISOString())
 
           return {
             id: subject.id,
@@ -133,13 +129,16 @@ export default function StudentDashboard() {
         .order('created_at', { ascending: false })
         .limit(5)
 
-      const assignmentsWithStatus = assignmentsData?.map(assignment => ({
-        id: assignment.id,
-        title: assignment.title,
-        subject: assignment.subjects?.name || 'Unknown',
-        dueDate: new Date(assignment.due_date).toLocaleDateString(),
-        status: assignment.assignment_submissions?.[0]?.status || 'pending'
-      })) || []
+      const assignmentsWithStatus = assignmentsData?.map(assignment => {
+        const submission = assignment.assignment_submissions?.find(sub => sub.status)
+        return {
+          id: assignment.id,
+          title: assignment.title,
+          subject: assignment.subjects?.name || 'Unknown',
+          dueDate: new Date(assignment.due_date).toLocaleDateString(),
+          status: submission?.status || 'pending'
+        }
+      }) || []
 
       setAssignments(assignmentsWithStatus)
 
@@ -219,22 +218,30 @@ export default function StudentDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {subjects.map((subject, index) => (
-              <div key={index} className="p-4 border rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-sm text-primary">{subject.name}</h3>
-                  {subject.newMaterials > 0 && (
-                    <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                      {subject.newMaterials} new
-                    </Badge>
-                  )}
+          {subjects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {subjects.map((subject, index) => (
+                <div key={index} className="p-4 border rounded-lg bg-gradient-to-br from-primary/5 to-secondary/5">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium text-sm text-primary">{subject.name}</h3>
+                    {subject.newMaterials > 0 && (
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        {subject.newMaterials} new
+                      </Badge>
+                    )}
+                  </div>
+                  <Progress value={subject.progress} className="mb-2" />
+                  <p className="text-xs text-muted-foreground">{subject.progress}% complete</p>
                 </div>
-                <Progress value={subject.progress} className="mb-2" />
-                <p className="text-xs text-muted-foreground">{subject.progress}% complete</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No subjects enrolled yet</p>
+              <p className="text-sm">Contact administration to enroll in subjects</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -253,27 +260,34 @@ export default function StudentDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {assignments.map((assignment, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
-                  <div>
-                    <h4 className="font-medium text-sm">{assignment.title}</h4>
-                    <p className="text-xs text-muted-foreground">{assignment.subject}</p>
+            {assignments.length > 0 ? (
+              <div className="space-y-3">
+                {assignments.map((assignment, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
+                    <div>
+                      <h4 className="font-medium text-sm">{assignment.title}</h4>
+                      <p className="text-xs text-muted-foreground">{assignment.subject}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge 
+                        variant={
+                          assignment.status === "submitted" ? "default" :
+                          assignment.status === "in-progress" ? "secondary" : "destructive"
+                        }
+                        className="text-xs"
+                      >
+                        {assignment.status === "pending" ? "Due " + assignment.dueDate : assignment.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <Badge 
-                      variant={
-                        assignment.status === "submitted" ? "default" :
-                        assignment.status === "in-progress" ? "secondary" : "destructive"
-                      }
-                      className="text-xs"
-                    >
-                      {assignment.status === "pending" ? "Due " + assignment.dueDate : assignment.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No assignments available</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -286,27 +300,34 @@ export default function StudentDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {todayClasses.map((classItem, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
-                      <Clock className="h-5 w-5 text-primary" />
+            {todayClasses.length > 0 ? (
+              <div className="space-y-3">
+                {todayClasses.map((classItem, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-primary/5">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
+                        <Clock className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{classItem.subject}</h4>
+                        <p className="text-sm text-muted-foreground">{classItem.faculty}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium">{classItem.subject}</h4>
-                      <p className="text-sm text-muted-foreground">{classItem.faculty}</p>
+                    <div className="text-right">
+                      <p className="font-medium text-primary">{classItem.time}</p>
+                      <Button size="sm" variant="outline" className="mt-1 border-primary text-primary hover:bg-primary/10">
+                        Join Class
+                      </Button>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-primary">{classItem.time}</p>
-                    <Button size="sm" variant="outline" className="mt-1 border-primary text-primary hover:bg-primary/10">
-                      Join Class
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No classes scheduled for today</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -320,15 +341,22 @@ export default function StudentDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {notifications.map((notification, index) => (
-              <div key={index} className="p-3 border rounded-lg hover:bg-primary/5">
-                <h4 className="font-medium text-sm text-primary">{notification.title}</h4>
-                <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">Posted {notification.time}</p>
-              </div>
-            ))}
-          </div>
+          {notifications.length > 0 ? (
+            <div className="space-y-3">
+              {notifications.map((notification, index) => (
+                <div key={index} className="p-3 border rounded-lg hover:bg-primary/5">
+                  <h4 className="font-medium text-sm text-primary">{notification.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Posted {notification.time}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No recent announcements</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
