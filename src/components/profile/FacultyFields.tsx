@@ -35,26 +35,12 @@ export function FacultyFields({ formData, setFormData, isLoading }: FacultyField
               <SelectItem value="Associate Professor">Associate Professor</SelectItem>
               <SelectItem value="Professor">Professor</SelectItem>
               <SelectItem value="Lecturer">Lecturer</SelectItem>
+              <SelectItem value="HOD">Head of Department</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="department">Department</Label>
-          <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select department" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Computer Science">Computer Science</SelectItem>
-              <SelectItem value="Information Technology">Information Technology</SelectItem>
-              <SelectItem value="Electronics">Electronics</SelectItem>
-              <SelectItem value="Mechanical">Mechanical</SelectItem>
-              <SelectItem value="Civil">Civil</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
         <div className="space-y-2">
           <Label htmlFor="experienceYears">Experience (Years)</Label>
           <Input
@@ -66,17 +52,17 @@ export function FacultyFields({ formData, setFormData, isLoading }: FacultyField
             disabled={isLoading}
           />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="qualification">Qualification</Label>
-        <Input
-          id="qualification"
-          value={formData.qualification}
-          onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-          placeholder="e.g., PhD in Computer Science"
-          required
-          disabled={isLoading}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="qualification">Qualification</Label>
+          <Input
+            id="qualification"
+            value={formData.qualification}
+            onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+            placeholder="e.g., PhD in Computer Science"
+            required
+            disabled={isLoading}
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="specialization">Specialization</Label>

@@ -23,7 +23,7 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    fullName: ""
+    fullName: role === 'student' ? "" : "" // Only for students now
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -48,7 +48,8 @@ export default function Register() {
       return
     }
 
-    if (!formData.fullName.trim()) {
+    // Only check full name for students
+    if (role === 'student' && !formData.fullName.trim()) {
       toast({
         title: "Error",
         description: "Please enter your full name",
@@ -117,18 +118,20 @@ export default function Register() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              {role === 'student' && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

@@ -38,7 +38,7 @@ export function ProfileSetupForm() {
       setFormData({
         fullName: user.name || '',
         studentId: '',
-        department: '',
+        department: 'Computer Science',
         semester: '',
         batch: '',
         phoneNumber: '',
@@ -48,9 +48,9 @@ export function ProfileSetupForm() {
       })
     } else if (role === 'faculty' || role === 'hod') {
       setFormData({
-        fullName: user.name || '',
+        fullName: '',
         employeeId: '',
-        department: '',
+        department: 'Computer Science',
         designation: '',
         qualification: '',
         experienceYears: '',
@@ -69,12 +69,12 @@ export function ProfileSetupForm() {
     setIsLoading(true)
 
     try {
-      // Update base profile
+      // Update base profile with proper data
       const baseUpdateData = {
         full_name: formData.fullName,
         phone_number: formData.phoneNumber,
         address: formData.address,
-        department: formData.department,
+        department: 'Centre for Computer Science & Application',
         updated_at: new Date().toISOString()
       }
 
@@ -85,17 +85,18 @@ export function ProfileSetupForm() {
 
       if (baseError) throw baseError
 
-      // Update role-specific profile
+      // Insert role-specific profile data
       if (role === 'student') {
         const { error: studentError } = await supabase
           .from('student_profiles')
-          .upsert({
+          .insert({
             user_id: user.id,
             student_id: formData.studentId,
             semester: parseInt(formData.semester),
             batch: formData.batch,
             guardian_name: formData.guardianName,
             guardian_phone: formData.guardianPhone,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
 
@@ -103,13 +104,14 @@ export function ProfileSetupForm() {
       } else if (role === 'faculty' || role === 'hod') {
         const { error: facultyError } = await supabase
           .from('faculty_profiles')
-          .upsert({
+          .insert({
             user_id: user.id,
             employee_id: formData.employeeId,
             designation: formData.designation,
             qualification: formData.qualification,
-            experience_years: parseInt(formData.experienceYears),
+            experience_years: parseInt(formData.experienceYears) || 0,
             specialization: formData.specialization,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
 
@@ -142,7 +144,7 @@ export function ProfileSetupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
         <CardDescription>
-          Please fill in your details to complete the setup process.
+          Please fill in your details to complete the setup process for CCSA.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -196,6 +198,10 @@ export function ProfileSetupForm() {
               rows={3}
               disabled={isLoading}
             />
+          </div>
+
+          <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
+            <strong>Department:</strong> Centre for Computer Science & Application (CCSA)
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
