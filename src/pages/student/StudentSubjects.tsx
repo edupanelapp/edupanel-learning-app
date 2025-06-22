@@ -69,14 +69,18 @@ export default function StudentSubjects() {
             .select('*', { count: 'exact', head: true })
             .eq('subject_id', subject.id)
 
-          // Get material count
+          // Get material count - fixed the query structure
           const { count: materialCount } = await supabase
             .from('topic_materials')
-            .select('tm.*', { count: 'exact', head: true })
-            .from('topic_materials as tm')
-            .innerJoin('chapter_topics as ct', 'tm.topic_id', 'ct.id')
-            .innerJoin('subject_chapters as sc', 'ct.chapter_id', 'sc.id')
-            .eq('sc.subject_id', subject.id)
+            .select(`
+              *,
+              chapter_topics!inner (
+                subject_chapters!inner (
+                  subject_id
+                )
+              )
+            `, { count: 'exact', head: true })
+            .eq('chapter_topics.subject_chapters.subject_id', subject.id)
 
           // Get progress percentage
           const { data: progressData } = await supabase
