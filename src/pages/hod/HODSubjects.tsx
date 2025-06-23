@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react"
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BookOpen, Users, Plus, Edit, User, Trash } from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
+import { BookOpen, Users, Plus, Edit, User, Trash, Loader2, UserPlus } from "lucide-react"
+import { useHODAuth } from "@/hooks/useHODAuth"
 import { supabase } from "@/integrations/supabase/client"
+import { supabaseAdmin } from "@/integrations/supabase/adminClient"
 import { useToast } from "@/hooks/use-toast"
 
 interface Subject {
@@ -44,14 +44,23 @@ interface CreateSubjectData {
   semester: number
 }
 
+interface EditSubjectData {
+  name: string
+  code: string
+  description?: string
+  credits: number
+  semester: number
+}
+
 export default function HODSubjects() {
-  const { user } = useAuth()
+  const { hodUser, isHODAuthenticated } = useHODAuth()
   const { toast } = useToast()
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [faculty, setFaculty] = useState<Faculty[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
   const [selectedFacultyId, setSelectedFacultyId] = useState<string>("")
   const [newSubject, setNewSubject] = useState<CreateSubjectData>({
@@ -61,18 +70,30 @@ export default function HODSubjects() {
     credits: 3,
     semester: 1
   })
+  const [editSubject, setEditSubject] = useState<EditSubjectData>({
+    name: "",
+    code: "",
+    description: "",
+    credits: 3,
+    semester: 1
+  })
 
   useEffect(() => {
-    if (user) {
+    if (isHODAuthenticated && hodUser) {
       fetchData()
     }
-  }, [user])
+  }, [isHODAuthenticated, hodUser])
 
   const fetchData = async () => {
-    if (!user) return
-
+    console.log('fetchData: START');
+    console.log('fetchData: isHODAuthenticated =', isHODAuthenticated, 'hodUser =', hodUser);
+    if (!isHODAuthenticated || !hodUser) {
+      console.log('fetchData: Not authenticated or no hodUser, returning early');
+      return;
+    }
     try {
-      // Fetch subjects with faculty information
+      setLoading(true);
+      console.log('fetchData: Fetching subjects...');
       const { data: subjectsData, error: subjectsError } = await supabase
         .from('subjects')
         .select(`
@@ -83,51 +104,54 @@ export default function HODSubjects() {
           )
         `)
         .eq('department', 'Centre for Computer Science & Application')
-        .order('created_at', { ascending: false })
-
-      if (subjectsError) throw subjectsError
-
-      // Get student counts for each subject
+        .order('created_at', { ascending: false });
+      console.log('fetchData: subjectsData result:', subjectsData, subjectsError);
+      if (subjectsError) {
+        console.error('fetchData: Error fetching subjects:', subjectsError);
+        throw subjectsError;
+      }
       const subjectsWithCounts = await Promise.all(
         (subjectsData || []).map(async (subject) => {
           const { count } = await supabase
             .from('student_subjects')
             .select('*', { count: 'exact', head: true })
-            .eq('subject_id', subject.id)
-
+            .eq('subject_id', subject.id);
+          console.log(`fetchData: student count for subject ${subject.id}:`, count);
           return {
             ...subject,
             studentCount: count || 0,
             status: subject.faculty_id ? 'active' : 'unassigned'
-          }
+          };
         })
-      )
-
-      setSubjects(subjectsWithCounts)
-
-      // Fetch available faculty
+      );
+      setSubjects(subjectsWithCounts);
+      console.log('fetchData: subjectsWithCounts =', subjectsWithCounts);
       const { data: facultyData, error: facultyError } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url')
         .eq('role', 'faculty')
         .eq('department', 'Centre for Computer Science & Application')
-        .order('full_name')
-
-      if (facultyError) throw facultyError
-
-      setFaculty(facultyData || [])
-
-    } catch (error: any) {
-      console.error('Error fetching data:', error)
+        .order('full_name');
+      console.log('fetchData: facultyData result:', facultyData, facultyError);
+      if (facultyError) {
+        console.error('fetchData: Error fetching faculty:', facultyError);
+        throw facultyError;
+      }
+      setFaculty(facultyData || []);
+      console.log('fetchData: faculty set');
+    } catch (error) {
+      console.error('fetchData: Caught error:', error);
       toast({
-        title: "Error",
-        description: "Failed to load subjects data",
-        variant: "destructive"
-      })
+        title: 'Error',
+        description: 'Failed to load subjects data',
+        variant: 'destructive'
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
+      console.log('fetchData: Setting loading to false');
+      console.log('fetchData: END');
     }
-  }
+  };
 
   const handleCreateSubject = async () => {
     if (!newSubject.name || !newSubject.code) {
@@ -140,7 +164,7 @@ export default function HODSubjects() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('subjects')
         .insert({
           name: newSubject.name,
@@ -150,8 +174,12 @@ export default function HODSubjects() {
           semester: newSubject.semester,
           department: 'Centre for Computer Science & Application'
         })
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error creating subject:', error)
+        throw error
+      }
 
       toast({
         title: "Success",
@@ -166,6 +194,7 @@ export default function HODSubjects() {
         credits: 3,
         semester: 1
       })
+      
       fetchData()
 
     } catch (error: any) {
@@ -182,12 +211,15 @@ export default function HODSubjects() {
     if (!selectedSubject || !selectedFacultyId) return
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('subjects')
         .update({ faculty_id: selectedFacultyId })
         .eq('id', selectedSubject.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error assigning faculty:', error)
+        throw error
+      }
 
       toast({
         title: "Success",
@@ -197,6 +229,7 @@ export default function HODSubjects() {
       setIsAssignDialogOpen(false)
       setSelectedSubject(null)
       setSelectedFacultyId("")
+      
       fetchData()
 
     } catch (error: any) {
@@ -210,15 +243,18 @@ export default function HODSubjects() {
   }
 
   const handleDeleteSubject = async (subjectId: string) => {
-    if (!confirm('Are you sure you want to delete this subject?')) return
+    if (!confirm('Are you sure you want to delete this subject? This action cannot be undone.')) return
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('subjects')
         .delete()
         .eq('id', subjectId)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error deleting subject:', error)
+        throw error
+      }
 
       toast({
         title: "Success",
@@ -237,11 +273,79 @@ export default function HODSubjects() {
     }
   }
 
+  const handleEditSubject = async () => {
+    if (!selectedSubject || !editSubject.name || !editSubject.code) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabaseAdmin
+        .from('subjects')
+        .update({
+          name: editSubject.name,
+          code: editSubject.code,
+          description: editSubject.description || null,
+          credits: editSubject.credits,
+          semester: editSubject.semester
+        })
+        .eq('id', selectedSubject.id)
+
+      if (error) {
+        console.error('Error updating subject:', error)
+        throw error
+      }
+
+      toast({
+        title: "Success",
+        description: "Subject updated successfully"
+      })
+
+      setIsEditDialogOpen(false)
+      setSelectedSubject(null)
+      setEditSubject({
+        name: "",
+        code: "",
+        description: "",
+        credits: 3,
+        semester: 1
+      })
+      
+      fetchData()
+
+    } catch (error: any) {
+      console.error('Error updating subject:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update subject",
+        variant: "destructive"
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-lg">Loading subjects...</div>
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading subjects...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isHODAuthenticated) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground">Please log in as HOD to view this page.</p>
+          </div>
         </div>
       </div>
     )
@@ -286,7 +390,7 @@ export default function HODSubjects() {
                   value={newSubject.code}
                   onChange={(e) => setNewSubject({ ...newSubject, code: e.target.value })}
                   className="col-span-3"
-                  placeholder="e.g., CSE301"
+                  placeholder="e.g., TH 1.5"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -391,17 +495,6 @@ export default function HODSubjects() {
                 </div>
 
                 <div className="flex space-x-2">
-                  {!subject.faculty_id && (
-                    <Button 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSubject(subject)
-                        setIsAssignDialogOpen(true)
-                      }}
-                    >
-                      Assign Faculty
-                    </Button>
-                  )}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -410,8 +503,26 @@ export default function HODSubjects() {
                       setIsAssignDialogOpen(true)
                     }}
                   >
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Assign
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedSubject(subject)
+                      setEditSubject({
+                        name: subject.name,
+                        code: subject.code,
+                        description: subject.description || "",
+                        credits: subject.credits,
+                        semester: subject.semester || 1
+                      })
+                      setIsEditDialogOpen(true)
+                    }}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
-                    {subject.faculty_id ? 'Reassign' : 'Assign'}
+                    Edit
                   </Button>
                   <Button 
                     variant="outline" 
@@ -428,7 +539,6 @@ export default function HODSubjects() {
         ))}
       </div>
 
-      {/* Faculty Assignment Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -459,7 +569,82 @@ export default function HODSubjects() {
         </DialogContent>
       </Dialog>
 
-      {/* Faculty Workload Distribution */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Subject</DialogTitle>
+            <DialogDescription>
+              Update the details for {selectedSubject?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">Name</Label>
+              <Input
+                id="edit-name"
+                value={editSubject.name}
+                onChange={(e) => setEditSubject({ ...editSubject, name: e.target.value })}
+                className="col-span-3"
+                placeholder="Subject name"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-code" className="text-right">Code</Label>
+              <Input
+                id="edit-code"
+                value={editSubject.code}
+                onChange={(e) => setEditSubject({ ...editSubject, code: e.target.value })}
+                className="col-span-3"
+                placeholder="e.g., TH 1.5"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-credits" className="text-right">Credits</Label>
+              <Input
+                id="edit-credits"
+                type="number"
+                value={editSubject.credits}
+                onChange={(e) => setEditSubject({ ...editSubject, credits: parseInt(e.target.value) })}
+                className="col-span-3"
+                min="1"
+                max="6"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-semester" className="text-right">Semester</Label>
+              <Select 
+                value={editSubject.semester.toString()} 
+                onValueChange={(value) => setEditSubject({ ...editSubject, semester: parseInt(value) })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6].map((sem) => (
+                    <SelectItem key={sem} value={sem.toString()}>
+                      Semester {sem}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-description" className="text-right">Description</Label>
+              <Input
+                id="edit-description"
+                value={editSubject.description}
+                onChange={(e) => setEditSubject({ ...editSubject, description: e.target.value })}
+                className="col-span-3"
+                placeholder="Brief description (optional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditSubject}>Update Subject</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <CardTitle>Faculty Workload Distribution</CardTitle>
@@ -504,4 +689,4 @@ export default function HODSubjects() {
       )}
     </div>
   )
-}
+} 

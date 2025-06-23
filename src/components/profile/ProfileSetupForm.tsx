@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -38,7 +37,6 @@ export function ProfileSetupForm() {
       setFormData({
         fullName: user.name || '',
         studentId: '',
-        department: 'Computer Science',
         semester: '',
         batch: '',
         phoneNumber: '',
@@ -50,7 +48,6 @@ export function ProfileSetupForm() {
       setFormData({
         fullName: '',
         employeeId: '',
-        department: 'Computer Science',
         designation: '',
         qualification: '',
         experienceYears: '',

@@ -1,4 +1,3 @@
-
 import { Outlet, useLocation, useNavigate, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
@@ -47,8 +46,12 @@ export function BaseLayout({
         description: "You have been logged out of your account.",
       })
       
-      // Redirect to login page
-      navigate('/login')
+      // Redirect based on user role
+      if (userRole === 'hod') {
+        navigate('/admin/hod/access')
+      } else {
+        navigate('/login')
+      }
     } catch (error) {
       console.error('Logout failed:', error)
       toast({

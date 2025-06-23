@@ -5,9 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/hooks/useAuth";
+import { HODAuthProvider } from "@/hooks/useHODAuth";
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { FacultyLayout } from "@/components/layout/FacultyLayout";
-import { HODLayout } from "@/components/layout/HODLayout";
+import { ProtectedHODLayout } from "@/components/layout/ProtectedHODLayout";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -22,6 +23,9 @@ import Contact from "./pages/Contact";
 import HelpCenter from "./pages/HelpCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+
+// Admin Pages
+import HODAccess from "./pages/admin/HODAccess";
 
 // Student Pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -66,10 +70,11 @@ const App = () => (
       disableTransitionOnChange
     >
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <HODAuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<About />} />
@@ -83,6 +88,9 @@ const App = () => (
               <Route path="/email-verification" element={<EmailVerification />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/hod/access" element={<HODAccess />} />
               <Route path="/admin/verifications" element={<Verifications />} />
               
               {/* Student Routes */}
@@ -109,8 +117,8 @@ const App = () => (
                 <Route path="verifications" element={<Verifications />} />
               </Route>
 
-              {/* HOD Routes */}
-              <Route path="/hod" element={<HODLayout />}>
+                {/* Protected HOD Routes */}
+                <Route path="/hod" element={<ProtectedHODLayout />}>
                 <Route path="dashboard" element={<HODDashboard />} />
                 <Route path="approvals" element={<HODApprovals />} />
                 <Route path="subjects" element={<HODSubjects />} />
@@ -125,8 +133,9 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </HODAuthProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

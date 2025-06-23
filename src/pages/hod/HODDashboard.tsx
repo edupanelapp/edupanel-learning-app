@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, Users, UserCheck, Clock, TrendingUp } from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
+import { useHODAuth } from "@/hooks/useHODAuth"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
@@ -31,7 +30,7 @@ interface RecentActivity {
 }
 
 export default function HODDashboard() {
-  const { user } = useAuth()
+  const { hodUser } = useHODAuth()
   const { toast } = useToast()
   const [stats, setStats] = useState<DashboardStats>({
     totalSubjects: 0,
@@ -44,93 +43,90 @@ export default function HODDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (user) {
+    if (hodUser) {
       fetchDashboardData()
     }
-  }, [user])
+  }, [hodUser])
 
   const fetchDashboardData = async () => {
-    if (!user) return
-
+    console.log('fetchDashboardData: START');
+    console.log('fetchDashboardData: hodUser =', hodUser);
+    if (!hodUser) {
+      console.log('fetchDashboardData: No hodUser, returning early');
+      return;
+    }
     try {
-      // Fetch subjects count
+      console.log('fetchDashboardData: Fetching subjects count...');
       const { count: subjectsCount } = await supabase
         .from('subjects')
         .select('*', { count: 'exact', head: true })
-        .eq('department', 'Centre for Computer Science & Application')
-
-      // Fetch faculty count (approved)
+        .eq('department', 'Centre for Computer Science & Application');
+      console.log('fetchDashboardData: subjectsCount =', subjectsCount);
       const { count: facultyCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'faculty')
-        .eq('department', 'Centre for Computer Science & Application')
-
-      // Fetch students count
+        .eq('department', 'Centre for Computer Science & Application');
+      console.log('fetchDashboardData: facultyCount =', facultyCount);
       const { count: studentsCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'student')
-        .eq('department', 'Centre for Computer Science & Application')
-
-      // Fetch HOD count (should be just us, but for completeness)
+        .eq('department', 'Centre for Computer Science & Application');
+      console.log('fetchDashboardData: studentsCount =', studentsCount);
       const { count: hodCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'hod')
-        .eq('department', 'Centre for Computer Science & Application')
-
-      // Fetch pending faculty approvals (profiles without faculty_profiles)
-      const { data: pendingFaculty } = await supabase
+        .eq('department', 'Centre for Computer Science & Application');
+      console.log('fetchDashboardData: hodCount =', hodCount);
+      const { data: approvedFacultyIds } = await supabase
+        .from('faculty_profiles')
+        .select('user_id');
+      const approvedIds = approvedFacultyIds?.map(f => f.user_id) || [];
+      console.log('fetchDashboardData: approvedFacultyIds =', approvedFacultyIds);
+      const { data: allFaculty } = await supabase
         .from('profiles')
         .select('id, full_name, email, role, created_at')
         .eq('role', 'faculty')
         .eq('department', 'Centre for Computer Science & Application')
-        .not('id', 'in', 
-          supabase
-            .from('faculty_profiles')
-            .select('user_id')
-        )
-        .order('created_at', { ascending: false })
-        .limit(5)
-
-      setPendingApprovals(pendingFaculty || [])
-
+        .order('created_at', { ascending: false });
+      console.log('fetchDashboardData: allFaculty =', allFaculty);
+      const pendingFaculty = allFaculty?.filter(faculty => !approvedIds.includes(faculty.id)) || [];
+      setPendingApprovals(pendingFaculty || []);
       setStats({
         totalSubjects: subjectsCount || 0,
         totalFaculty: (facultyCount || 0) + (hodCount || 0),
         totalStudents: studentsCount || 0,
         pendingApprovals: (pendingFaculty || []).length
-      })
-
-      // Fetch recent notifications as activities
+      });
       const { data: notifications } = await supabase
         .from('notifications')
         .select('id, title, message, created_at, type')
-        .or(`sender_id.eq.${user.id},target_audience.eq.faculty,target_audience.eq.all`)
+        .or('target_audience.eq.faculty,target_audience.eq.all')
         .order('created_at', { ascending: false })
-        .limit(5)
-
+        .limit(5);
+      console.log('fetchDashboardData: notifications =', notifications);
       const activities = notifications?.map(notif => ({
         id: notif.id,
         type: notif.type || 'announcement',
         message: notif.title,
         created_at: notif.created_at
-      })) || []
-
-      setRecentActivities(activities)
-
-    } catch (error: any) {
-      console.error('Error fetching dashboard data:', error)
+      })) || [];
+      setRecentActivities(activities);
+    } catch (error) {
+      console.error('fetchDashboardData: Caught error:', error);
       toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive"
-      })
+        title: 'Error',
+        description: 'Failed to load dashboard data',
+        variant: 'destructive'
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
+      console.log('fetchDashboardData: Setting loading to false');
+      console.log('fetchDashboardData: END');
     }
-  }
+  };
 
   const handleApproveFaculty = async (facultyId: string) => {
     try {
@@ -197,7 +193,7 @@ export default function HODDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome, {user?.name}! 👋</h1>
+          <h1 className="text-3xl font-bold text-foreground">Welcome, {hodUser?.name}! 👋</h1>
           <p className="text-muted-foreground">Overview of your department's academic activities</p>
         </div>
         <Button onClick={() => window.location.href = '/hod/approvals'}>

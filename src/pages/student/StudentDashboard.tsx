@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -167,7 +166,7 @@ export default function StudentDashboard() {
       const { data: notificationsData } = await supabase
         .from('notifications')
         .select('title, message, created_at')
-        .or(`recipient_id.eq.${user.id},target_audience.eq.students,target_audience.eq.all`)
+        .or('target_audience.eq.students,target_audience.eq.all')
         .order('created_at', { ascending: false })
         .limit(5)
 

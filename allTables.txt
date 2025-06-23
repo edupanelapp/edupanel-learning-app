@@ -1,0 +1,729 @@
+create table public.assignment_submissions (
+  id uuid not null default gen_random_uuid (),
+  assignment_id uuid null,
+  student_id uuid null,
+  submission_text text null,
+  file_url text null,
+  marks_obtained integer null,
+  feedback text null,
+  submitted_at timestamp with time zone null default now(),
+  graded_at timestamp with time zone null,
+  status text null default 'submitted'::text,
+  constraint assignment_submissions_pkey primary key (id),
+  constraint assignment_submissions_assignment_id_student_id_key unique (assignment_id, student_id),
+  constraint assignment_submissions_assignment_id_fkey foreign KEY (assignment_id) references assignments (id) on delete CASCADE,
+  constraint assignment_submissions_student_id_fkey foreign KEY (student_id) references profiles (id) on delete CASCADE,
+  constraint assignment_submissions_status_check check (
+    (
+      status = any (
+        array['submitted'::text, 'graded'::text, 'late'::text]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+
+create table public.assignment_updates (
+  id uuid not null default gen_random_uuid (),
+  assignment_id uuid null,
+  student_id uuid null,
+  submission_id uuid null,
+  update_type text not null,
+  status text null default 'pending'::text,
+  marks_awarded numeric(5, 2) null,
+  feedback text null,
+  attachments text[] null,
+  updated_by uuid null,
+  remarks text null,
+  created_at timestamp with time zone null default now(),
+  constraint assignment_updates_pkey primary key (id),
+  constraint assignment_updates_student_id_fkey foreign KEY (student_id) references profiles (id) on delete CASCADE,
+  constraint assignment_updates_submission_id_fkey foreign KEY (submission_id) references assignment_submissions (id),
+  constraint assignment_updates_updated_by_fkey foreign KEY (updated_by) references profiles (id),
+  constraint assignment_updates_assignment_id_fkey foreign KEY (assignment_id) references assignments (id) on delete CASCADE,
+  constraint assignment_updates_status_check check (
+    (
+      status = any (
+        array[
+          'pending'::text,
+          'in_review'::text,
+          'graded'::text,
+          'returned'::text,
+          'completed'::text
+        ]
+      )
+    )
+  ),
+  constraint assignment_updates_update_type_check check (
+    (
+      update_type = any (
+        array[
+          'submitted'::text,
+          'reviewed'::text,
+          'graded'::text,
+          'returned'::text,
+          'resubmitted'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_assignment_updates_assignment on public.assignment_updates using btree (assignment_id) TABLESPACE pg_default;
+
+create index IF not exists idx_assignment_updates_student on public.assignment_updates using btree (student_id) TABLESPACE pg_default;
+
+
+create table public.assignments (
+  id uuid not null default gen_random_uuid (),
+  subject_id uuid null,
+  title text not null,
+  description text null,
+  due_date timestamp with time zone not null,
+  max_marks integer null default 100,
+  faculty_id uuid null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  semester_id uuid null,
+  section text null,
+  assignment_type text null default 'Individual'::text,
+  instructions text null,
+  submission_format text[] null,
+  late_submission_penalty integer null default 0,
+  is_active boolean null default true,
+  total_submissions integer null default 0,
+  average_marks numeric(5, 2) null,
+  constraint assignments_pkey primary key (id),
+  constraint assignments_faculty_id_fkey foreign KEY (faculty_id) references profiles (id),
+  constraint assignments_semester_id_fkey foreign KEY (semester_id) references semesters (id),
+  constraint assignments_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE,
+  constraint assignments_assignment_type_check check (
+    (
+      assignment_type = any (
+        array[
+          'Individual'::text,
+          'Group'::text,
+          'Lab'::text,
+          'Project'::text,
+          'Quiz'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+
+create table public.chapter_topics (
+  id uuid not null default gen_random_uuid (),
+  chapter_id uuid null,
+  topic_number integer not null,
+  title text not null,
+  description text null,
+  content text null,
+  key_points text[] null,
+  examples text null,
+  estimated_duration integer null default 30,
+  difficulty_level text null default 'Beginner'::text,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint chapter_topics_pkey primary key (id),
+  constraint chapter_topics_chapter_id_topic_number_key unique (chapter_id, topic_number),
+  constraint chapter_topics_chapter_id_fkey foreign KEY (chapter_id) references subject_chapters (id) on delete CASCADE,
+  constraint chapter_topics_difficulty_level_check check (
+    (
+      difficulty_level = any (
+        array[
+          'Beginner'::text,
+          'Intermediate'::text,
+          'Advanced'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_chapter_topics_chapter on public.chapter_topics using btree (chapter_id) TABLESPACE pg_default;
+
+
+create table public.class_schedule (
+  id uuid not null default gen_random_uuid (),
+  subject_id uuid null,
+  faculty_id uuid null,
+  semester_id uuid null,
+  section text not null,
+  day_of_week integer null,
+  start_time time without time zone not null,
+  end_time time without time zone not null,
+  classroom text null,
+  class_type text null default 'lecture'::text,
+  recurring_pattern text null default 'weekly'::text,
+  start_date date not null,
+  end_date date null,
+  is_active boolean null default true,
+  notes text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint class_schedule_pkey primary key (id),
+  constraint class_schedule_faculty_id_fkey foreign KEY (faculty_id) references profiles (id),
+  constraint class_schedule_semester_id_fkey foreign KEY (semester_id) references semesters (id),
+  constraint class_schedule_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE,
+  constraint valid_time_range check ((end_time > start_time)),
+  constraint class_schedule_day_of_week_check check (
+    (
+      (day_of_week >= 0)
+      and (day_of_week <= 6)
+    )
+  ),
+  constraint class_schedule_recurring_pattern_check check (
+    (
+      recurring_pattern = any (
+        array[
+          'weekly'::text,
+          'biweekly'::text,
+          'monthly'::text,
+          'once'::text
+        ]
+      )
+    )
+  ),
+  constraint class_schedule_class_type_check check (
+    (
+      class_type = any (
+        array[
+          'lecture'::text,
+          'lab'::text,
+          'tutorial'::text,
+          'practical'::text,
+          'seminar'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_class_schedule_subject on public.class_schedule using btree (subject_id) TABLESPACE pg_default;
+
+create index IF not exists idx_class_schedule_semester on public.class_schedule using btree (semester_id) TABLESPACE pg_default;
+
+create index IF not exists idx_class_schedule_day_time on public.class_schedule using btree (day_of_week, start_time) TABLESPACE pg_default;
+
+
+
+
+create table public.classes (
+  id uuid not null default gen_random_uuid (),
+  subject_id uuid null,
+  title text not null,
+  description text null,
+  scheduled_at timestamp with time zone not null,
+  duration integer null default 60,
+  type text null default 'lecture'::text,
+  location text null,
+  faculty_id uuid null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint classes_pkey primary key (id),
+  constraint classes_faculty_id_fkey foreign KEY (faculty_id) references profiles (id),
+  constraint classes_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE,
+  constraint classes_type_check check (
+    (
+      type = any (
+        array[
+          'lecture'::text,
+          'lab'::text,
+          'tutorial'::text,
+          'exam'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+
+
+
+create table public.courses (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  code text not null,
+  description text null,
+  department_id uuid null,
+  duration_years integer not null default 4,
+  degree_type text null,
+  credits_required integer null default 120,
+  eligibility_criteria text null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint courses_pkey primary key (id),
+  constraint courses_code_key unique (code),
+  constraint courses_department_id_fkey foreign KEY (department_id) references departments (id) on delete CASCADE,
+  constraint courses_degree_type_check check (
+    (
+      degree_type = any (
+        array[
+          'Bachelor'::text,
+          'Master'::text,
+          'PhD'::text,
+          'Diploma'::text,
+          'Certificate'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_courses_department on public.courses using btree (department_id) TABLESPACE pg_default;
+
+
+
+
+create table public.departments (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  code text not null,
+  description text null,
+  head_of_department_id uuid null,
+  established_year integer null,
+  total_faculty integer null default 0,
+  total_students integer null default 0,
+  contact_email text null,
+  contact_phone text null,
+  location text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint departments_pkey primary key (id),
+  constraint departments_code_key unique (code),
+  constraint departments_name_key unique (name),
+  constraint departments_head_of_department_id_fkey foreign KEY (head_of_department_id) references profiles (id)
+) TABLESPACE pg_default;
+
+
+
+
+create table public.faculty_profiles (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  employee_id text null,
+  designation text null,
+  qualification text null,
+  experience_years integer null,
+  specialization text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint faculty_profiles_pkey primary key (id),
+  constraint faculty_profiles_employee_id_key unique (employee_id),
+  constraint faculty_profiles_user_id_key unique (user_id),
+  constraint faculty_profiles_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+
+
+
+create table public.notifications (
+  id uuid not null default gen_random_uuid (),
+  recipient_id uuid null,
+  sender_id uuid null,
+  title text not null,
+  message text not null,
+  type text null default 'general'::text,
+  is_read boolean null default false,
+  created_at timestamp with time zone null default now(),
+  target_audience text null,
+  department_id uuid null,
+  semester_id uuid null,
+  section text null,
+  priority text null default 'medium'::text,
+  expires_at timestamp with time zone null,
+  attachments text[] null,
+  action_required boolean null default false,
+  action_url text null,
+  constraint notifications_pkey primary key (id),
+  constraint notifications_department_id_fkey foreign KEY (department_id) references departments (id),
+  constraint notifications_recipient_id_fkey foreign KEY (recipient_id) references profiles (id) on delete CASCADE,
+  constraint notifications_semester_id_fkey foreign KEY (semester_id) references semesters (id),
+  constraint notifications_sender_id_fkey foreign KEY (sender_id) references profiles (id),
+  constraint notifications_priority_check check (
+    (
+      priority = any (
+        array[
+          'low'::text,
+          'medium'::text,
+          'high'::text,
+          'urgent'::text
+        ]
+      )
+    )
+  ),
+  constraint notifications_type_check check (
+    (
+      type = any (
+        array[
+          'assignment'::text,
+          'class'::text,
+          'announcement'::text,
+          'grade'::text,
+          'general'::text
+        ]
+      )
+    )
+  ),
+  constraint notifications_target_audience_check check (
+    (
+      target_audience = any (
+        array[
+          'all'::text,
+          'students'::text,
+          'faculty'::text,
+          'hod'::text,
+          'department'::text,
+          'semester'::text,
+          'section'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+
+
+
+create table public.profiles (
+  id uuid not null,
+  full_name text null,
+  role text not null,
+  email text not null,
+  avatar_url text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  department text null,
+  phone_number text null,
+  address text null,
+  constraint profiles_pkey primary key (id),
+  constraint profiles_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE,
+  constraint profiles_role_check check (
+    (
+      role = any (
+        array['student'::text, 'faculty'::text, 'hod'::text]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+
+
+
+create table public.project_ideas (
+  id uuid not null default gen_random_uuid (),
+  title text not null,
+  description text not null,
+  subject_id uuid null,
+  topic_id uuid null,
+  difficulty_level text not null,
+  estimated_duration text null,
+  technologies_used text[] null,
+  prerequisites text[] null,
+  learning_outcomes text[] null,
+  detailed_requirements text null,
+  sample_code_url text null,
+  reference_links text[] null,
+  max_team_size integer null default 4,
+  min_team_size integer null default 1,
+  is_group_project boolean null default false,
+  created_by uuid null,
+  target_semester integer null,
+  department_id uuid null,
+  status text null default 'draft'::text,
+  tags text[] null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint project_ideas_pkey primary key (id),
+  constraint project_ideas_department_id_fkey foreign KEY (department_id) references departments (id),
+  constraint project_ideas_created_by_fkey foreign KEY (created_by) references profiles (id),
+  constraint project_ideas_subject_id_fkey foreign KEY (subject_id) references subjects (id),
+  constraint project_ideas_topic_id_fkey foreign KEY (topic_id) references chapter_topics (id),
+  constraint project_ideas_difficulty_level_check check (
+    (
+      difficulty_level = any (
+        array[
+          'Beginner'::text,
+          'Intermediate'::text,
+          'Advanced'::text
+        ]
+      )
+    )
+  ),
+  constraint project_ideas_status_check check (
+    (
+      status = any (
+        array[
+          'draft'::text,
+          'published'::text,
+          'archived'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_project_ideas_subject on public.project_ideas using btree (subject_id) TABLESPACE pg_default;
+
+
+
+
+
+create table public.semesters (
+  id uuid not null default gen_random_uuid (),
+  course_id uuid null,
+  semester_number integer not null,
+  name text not null,
+  description text null,
+  start_date date null,
+  end_date date null,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint semesters_pkey primary key (id),
+  constraint semesters_course_id_semester_number_key unique (course_id, semester_number),
+  constraint semesters_course_id_fkey foreign KEY (course_id) references courses (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_semesters_course on public.semesters using btree (course_id) TABLESPACE pg_default;
+
+
+
+
+create table public.student_profiles (
+  id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  student_id text null,
+  semester integer null,
+  batch text null,
+  guardian_name text null,
+  guardian_phone text null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint student_profiles_pkey primary key (id),
+  constraint student_profiles_student_id_key unique (student_id),
+  constraint student_profiles_user_id_key unique (user_id),
+  constraint student_profiles_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+
+
+
+create table public.student_progress (
+  id uuid not null default gen_random_uuid (),
+  student_id uuid null,
+  subject_id uuid null,
+  chapter_id uuid null,
+  topic_id uuid null,
+  progress_type text not null,
+  completion_percentage numeric(5, 2) null default 0.00,
+  time_spent integer null default 0,
+  score numeric(5, 2) null,
+  max_score numeric(5, 2) null,
+  attempts integer null default 1,
+  last_accessed timestamp with time zone null default now(),
+  notes text null,
+  milestones_achieved text[] null,
+  areas_of_improvement text[] null,
+  strengths text[] null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint student_progress_pkey primary key (id),
+  constraint student_progress_student_id_subject_id_chapter_id_topic_id__key unique (
+    student_id,
+    subject_id,
+    chapter_id,
+    topic_id,
+    progress_type
+  ),
+  constraint student_progress_topic_id_fkey foreign KEY (topic_id) references chapter_topics (id),
+  constraint student_progress_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE,
+  constraint student_progress_chapter_id_fkey foreign KEY (chapter_id) references subject_chapters (id),
+  constraint student_progress_student_id_fkey foreign KEY (student_id) references profiles (id) on delete CASCADE,
+  constraint student_progress_progress_type_check check (
+    (
+      progress_type = any (
+        array[
+          'chapter_completed'::text,
+          'topic_completed'::text,
+          'assignment_submitted'::text,
+          'quiz_completed'::text,
+          'material_viewed'::text
+        ]
+      )
+    )
+  ),
+  constraint student_progress_completion_percentage_check check (
+    (
+      (completion_percentage >= (0)::numeric)
+      and (completion_percentage <= (100)::numeric)
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_student_progress_student on public.student_progress using btree (student_id) TABLESPACE pg_default;
+
+create index IF not exists idx_student_progress_subject on public.student_progress using btree (subject_id) TABLESPACE pg_default;
+
+
+
+
+
+create table public.student_subjects (
+  id uuid not null default gen_random_uuid (),
+  student_id uuid null,
+  subject_id uuid null,
+  enrolled_at timestamp with time zone null default now(),
+  constraint student_subjects_pkey primary key (id),
+  constraint student_subjects_student_id_subject_id_key unique (student_id, subject_id),
+  constraint student_subjects_student_id_fkey foreign KEY (student_id) references profiles (id) on delete CASCADE,
+  constraint student_subjects_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+
+
+
+
+create table public.subject_chapters (
+  id uuid not null default gen_random_uuid (),
+  subject_id uuid null,
+  chapter_number integer not null,
+  title text not null,
+  description text null,
+  learning_objectives text null,
+  estimated_hours integer null default 4,
+  difficulty_level text null default 'Beginner'::text,
+  is_active boolean null default true,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint subject_chapters_pkey primary key (id),
+  constraint subject_chapters_subject_id_chapter_number_key unique (subject_id, chapter_number),
+  constraint subject_chapters_subject_id_fkey foreign KEY (subject_id) references subjects (id) on delete CASCADE,
+  constraint subject_chapters_difficulty_level_check check (
+    (
+      difficulty_level = any (
+        array[
+          'Beginner'::text,
+          'Intermediate'::text,
+          'Advanced'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_subject_chapters_subject on public.subject_chapters using btree (subject_id) TABLESPACE pg_default;
+
+
+
+
+
+
+create table public.subjects (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  code text not null,
+  description text null,
+  department text not null,
+  semester integer null,
+  credits integer null default 3,
+  faculty_id uuid null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  course_id uuid null,
+  semester_id uuid null,
+  subject_type text null default 'Core'::text,
+  prerequisites text null,
+  learning_outcomes text null,
+  assessment_criteria text null,
+  constraint subjects_pkey primary key (id),
+  constraint subjects_code_key unique (code),
+  constraint subjects_course_id_fkey foreign KEY (course_id) references courses (id),
+  constraint subjects_faculty_id_fkey foreign KEY (faculty_id) references profiles (id),
+  constraint subjects_semester_id_fkey foreign KEY (semester_id) references semesters (id),
+  constraint subjects_subject_type_check check (
+    (
+      subject_type = any (
+        array[
+          'Core'::text,
+          'Elective'::text,
+          'Lab'::text,
+          'Project'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_subjects_course on public.subjects using btree (course_id) TABLESPACE pg_default;
+
+create index IF not exists idx_subjects_semester on public.subjects using btree (semester_id) TABLESPACE pg_default;
+
+
+
+
+create table public.topic_materials (
+  id uuid not null default gen_random_uuid (),
+  topic_id uuid null,
+  material_type text not null,
+  title text not null,
+  description text null,
+  file_url text null,
+  content text null,
+  video_url text null,
+  duration integer null,
+  file_size bigint null,
+  mime_type text null,
+  tags text[] null,
+  is_downloadable boolean null default true,
+  access_level text null default 'student'::text,
+  uploaded_by uuid null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  constraint topic_materials_pkey primary key (id),
+  constraint topic_materials_topic_id_fkey foreign KEY (topic_id) references chapter_topics (id) on delete CASCADE,
+  constraint topic_materials_uploaded_by_fkey foreign KEY (uploaded_by) references profiles (id),
+  constraint topic_materials_access_level_check check (
+    (
+      access_level = any (
+        array[
+          'public'::text,
+          'student'::text,
+          'faculty'::text,
+          'premium'::text
+        ]
+      )
+    )
+  ),
+  constraint topic_materials_material_type_check check (
+    (
+      material_type = any (
+        array[
+          'pdf'::text,
+          'text'::text,
+          'video'::text,
+          'image'::text,
+          'link'::text,
+          'audio'::text
+        ]
+      )
+    )
+  )
+) TABLESPACE pg_default;
+
+create index IF not exists idx_topic_materials_topic on public.topic_materials using btree (topic_id) TABLESPACE pg_default;
+
+
+
+
+
+
+
+HOD ACCESS 
+sitr:  http://localhost:8081/admin/hod/access
+email: hod@ccsa.edu.in
+password: HOD@2024#Secure

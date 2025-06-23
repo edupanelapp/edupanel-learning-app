@@ -1,4 +1,3 @@
-
 -- Create separate tables for role-specific profile data
 CREATE TABLE public.student_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -23,19 +22,6 @@ CREATE TABLE public.faculty_profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Remove role-specific columns from main profiles table since we'll use separate tables
--- But keep the commonly needed ones
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS student_id;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS employee_id;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS semester;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS batch;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS designation;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS qualification;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS experience_years;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS guardian_name;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS guardian_phone;
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS specialization;
 
 -- Enable RLS on new tables
 ALTER TABLE public.student_profiles ENABLE ROW LEVEL SECURITY;

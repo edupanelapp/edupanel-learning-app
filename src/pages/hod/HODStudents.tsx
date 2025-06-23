@@ -1,70 +1,201 @@
-
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Download, TrendingUp, TrendingDown, Users } from "lucide-react"
+import { Search, Download, TrendingUp, TrendingDown, Users, Loader2 } from "lucide-react"
+import { useHODAuth } from "@/hooks/useHODAuth"
+import { useToast } from "@/hooks/use-toast"
+
+interface Student {
+  id: string
+  name: string
+  rollNo: string
+  course: string
+  semester: number
+  progress: number
+  assignments: { completed: number; total: number }
+  projects: number
+  gpa: number
+  trend: "up" | "down"
+}
+
+interface SemesterStats {
+  [key: string]: { count: number; avgProgress: number }
+}
+
+// Mock data for students
+const mockStudents: Student[] = [
+  {
+    id: "1",
+    name: "John Doe",
+    rollNo: "CSE2024001",
+    course: "Computer Science",
+    semester: 3,
+    progress: 85,
+    assignments: { completed: 8, total: 10 },
+    projects: 3,
+    gpa: 3.8,
+    trend: "up"
+  },
+  {
+    id: "2",
+    name: "Jane Smith",
+    rollNo: "CSE2024002",
+    course: "Computer Science",
+    semester: 3,
+    progress: 92,
+    assignments: { completed: 10, total: 10 },
+    projects: 4,
+    gpa: 4.0,
+    trend: "up"
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    rollNo: "CSE2024003",
+    course: "Computer Science",
+    semester: 5,
+    progress: 78,
+    assignments: { completed: 6, total: 8 },
+    projects: 2,
+    gpa: 3.5,
+    trend: "down"
+  },
+  {
+    id: "4",
+    name: "Sarah Wilson",
+    rollNo: "CSE2024004",
+    course: "Computer Science",
+    semester: 5,
+    progress: 88,
+    assignments: { completed: 7, total: 8 },
+    projects: 3,
+    gpa: 3.9,
+    trend: "up"
+  },
+  {
+    id: "5",
+    name: "Alex Brown",
+    rollNo: "CSE2024005",
+    course: "Computer Science",
+    semester: 1,
+    progress: 65,
+    assignments: { completed: 4, total: 6 },
+    projects: 1,
+    gpa: 3.2,
+    trend: "up"
+  },
+  {
+    id: "6",
+    name: "Emily Davis",
+    rollNo: "CSE2024006",
+    course: "Computer Science",
+    semester: 1,
+    progress: 72,
+    assignments: { completed: 5, total: 6 },
+    projects: 2,
+    gpa: 3.6,
+    trend: "up"
+  }
+]
 
 export default function HODStudents() {
-  const students = [
-    {
-      id: 1,
-      name: "John Doe",
-      rollNo: "BCA001",
-      course: "BCA",
-      semester: "3rd",
-      progress: 89,
-      assignments: { completed: 18, total: 20 },
-      projects: 3,
-      gpa: 3.7,
-      trend: "up"
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      rollNo: "BCA002", 
-      course: "BCA",
-      semester: "3rd",
-      progress: 94,
-      assignments: { completed: 19, total: 20 },
-      projects: 4,
-      gpa: 3.9,
-      trend: "up"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      rollNo: "BCA003",
-      course: "BCA", 
-      semester: "4th",
-      progress: 76,
-      assignments: { completed: 14, total: 18 },
-      projects: 2,
-      gpa: 3.2,
-      trend: "down"
-    },
-    {
-      id: 4,
-      name: "Sarah Wilson",
-      rollNo: "BCA004",
-      course: "BCA",
-      semester: "4th",
-      progress: 91,
-      assignments: { completed: 16, total: 18 },
-      projects: 3,
-      gpa: 3.8,
-      trend: "up"
-    }
-  ]
+  console.log('HODStudents component rendering...')
+  
+  const { hodUser, isLoading, isHODAuthenticated } = useHODAuth()
+  const { toast } = useToast()
+  const [students, setStudents] = useState<Student[]>([])
+  const [semesterStats, setSemesterStats] = useState<SemesterStats>({})
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterSemester, setFilterSemester] = useState("")
 
-  const semesterStats = {
-    "3rd": { count: 2, avgProgress: 91.5 },
-    "4th": { count: 2, avgProgress: 83.5 }
+  console.log('HODStudents auth state:', { hodUser, isLoading, isHODAuthenticated })
+
+  useEffect(() => {
+    console.log('HODStudents useEffect triggered, hodUser:', hodUser, 'isLoading:', isLoading, 'isHODAuthenticated:', isHODAuthenticated)
+    
+    // If authentication is complete, load mock data immediately
+    if (isHODAuthenticated && !isLoading) {
+      console.log('Authentication complete, loading mock data immediately')
+      loadMockData()
+    }
+  }, [isHODAuthenticated, isLoading])
+
+  const loadMockData = () => {
+    console.log('Loading mock student data...')
+    setLoading(true)
+    
+    // Load data immediately without delay
+    setStudents(mockStudents)
+    
+    // Calculate semester statistics
+    const semesterData: SemesterStats = {}
+    mockStudents.forEach(student => {
+      const semesterKey = `${student.semester}`
+      if (!semesterData[semesterKey]) {
+        semesterData[semesterKey] = { count: 0, avgProgress: 0 }
+      }
+      semesterData[semesterKey].count++
+      semesterData[semesterKey].avgProgress += student.progress
+    })
+
+    // Calculate averages
+    Object.keys(semesterData).forEach(semester => {
+      semesterData[semester].avgProgress = Math.round(
+        semesterData[semester].avgProgress / semesterData[semester].count
+      )
+    })
+
+    setSemesterStats(semesterData)
+    setLoading(false)
+    console.log('Mock data loaded successfully')
+  }
+
+  // Filter students based on search and filters
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSemester = !filterSemester || student.semester.toString() === filterSemester
+
+    return matchesSearch && matchesSemester
+  })
+
+  const uniqueSemesters = [...new Set(students.map(s => s.semester.toString()))].sort()
+
+  if (loading || isLoading) {
+    console.log('HODStudents: Showing loading screen', { loading, isLoading, isHODAuthenticated, hodUser })
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">
+            {isLoading ? 'Loading authentication...' : 'Loading students...'}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isHODAuthenticated) {
+    console.log('HODStudents: Not authenticated', { isHODAuthenticated, isLoading, hodUser })
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground">Please log in as HOD to view this page.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
+      {(() => { console.log('HODStudents: Rendering main content', { students: students.length, isHODAuthenticated, loading, isLoading }); return null; })()}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Student Overview</h1>
@@ -90,10 +221,21 @@ export default function HODStudents() {
                   <Input 
                     placeholder="Search by name, roll number, or course..." 
                     className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
-              <Button variant="outline">Filter by Semester</Button>
+              <select 
+                className="px-3 py-2 border border-input rounded-md bg-background"
+                value={filterSemester}
+                onChange={(e) => setFilterSemester(e.target.value)}
+              >
+                <option value="">All Semesters</option>
+                {uniqueSemesters.map(semester => (
+                  <option key={semester} value={semester}>{semester} Semester</option>
+                ))}
+              </select>
             </div>
           </CardContent>
         </Card>
@@ -113,7 +255,9 @@ export default function HODStudents() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(students.reduce((sum, s) => sum + s.progress, 0) / students.length)}%
+              {students.length > 0 
+                ? Math.round(students.reduce((sum, s) => sum + s.progress, 0) / students.length)
+                : 0}%
             </div>
           </CardContent>
         </Card>
@@ -148,7 +292,7 @@ export default function HODStudents() {
 
       {/* Students List */}
       <div className="grid gap-4">
-        {students.map((student) => (
+        {filteredStudents.map((student) => (
           <Card key={student.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -201,7 +345,7 @@ export default function HODStudents() {
               {/* Progress Bar */}
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
-                  <span>Course Progress</span>
+                  <span>Overall Progress</span>
                   <span>{student.progress}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
@@ -225,31 +369,51 @@ export default function HODStudents() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">87%</div>
+              <div className="text-2xl font-bold text-primary">
+                {students.length > 0 
+                  ? Math.round(students.reduce((sum, s) => sum + s.assignments.completed, 0) / 
+                              students.reduce((sum, s) => sum + s.assignments.total, 0) * 100)
+                  : 0}%
+              </div>
               <div className="text-sm text-muted-foreground">Assignment Completion Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">3.6</div>
+              <div className="text-2xl font-bold text-primary">
+                {students.length > 0 
+                  ? Math.round(students.reduce((sum, s) => sum + s.gpa, 0) / students.length * 10) / 10
+                  : 0}
+              </div>
               <div className="text-sm text-muted-foreground">Average GPA</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">78</div>
+              <div className="text-2xl font-bold text-primary">
+                {students.reduce((sum, s) => sum + s.projects, 0)}
+              </div>
               <div className="text-sm text-muted-foreground">Active Projects</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">94%</div>
-              <div className="text-sm text-muted-foreground">Student Satisfaction</div>
+              <div className="text-2xl font-bold text-primary">
+                {students.length > 0 
+                  ? Math.round(students.filter(s => s.trend === 'up').length / students.length * 100)
+                  : 0}%
+              </div>
+              <div className="text-sm text-muted-foreground">Improving Students</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {students.length === 0 && (
+      {filteredStudents.length === 0 && (
         <Card className="text-center py-12">
           <CardContent>
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No students found</h3>
-            <p className="text-muted-foreground">Students will appear here once they enroll in courses</p>
+            <p className="text-muted-foreground">
+              {students.length === 0 
+                ? "Students will appear here once they enroll in courses"
+                : "No students match your search criteria"
+              }
+            </p>
           </CardContent>
         </Card>
       )}

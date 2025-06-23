@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -40,21 +39,6 @@ export function StudentFields({ formData, setFormData, isLoading }: StudentField
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="department">Department</Label>
-          <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select department" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Computer Science">Computer Science</SelectItem>
-              <SelectItem value="Information Technology">Information Technology</SelectItem>
-              <SelectItem value="Electronics">Electronics</SelectItem>
-              <SelectItem value="Mechanical">Mechanical</SelectItem>
-              <SelectItem value="Civil">Civil</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="batch">Batch</Label>
           <Input
             id="batch"
@@ -64,8 +48,6 @@ export function StudentFields({ formData, setFormData, isLoading }: StudentField
             disabled={isLoading}
           />
         </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="guardianName">Guardian Name</Label>
           <Input
@@ -76,16 +58,16 @@ export function StudentFields({ formData, setFormData, isLoading }: StudentField
             disabled={isLoading}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="guardianPhone">Guardian Phone</Label>
-          <Input
-            id="guardianPhone"
-            value={formData.guardianPhone}
-            onChange={(e) => setFormData({ ...formData, guardianPhone: e.target.value })}
-            placeholder="Enter guardian's phone"
-            disabled={isLoading}
-          />
-        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="guardianPhone">Guardian Phone</Label>
+        <Input
+          id="guardianPhone"
+          value={formData.guardianPhone}
+          onChange={(e) => setFormData({ ...formData, guardianPhone: e.target.value })}
+          placeholder="Enter guardian's phone"
+          disabled={isLoading}
+        />
       </div>
     </>
   )

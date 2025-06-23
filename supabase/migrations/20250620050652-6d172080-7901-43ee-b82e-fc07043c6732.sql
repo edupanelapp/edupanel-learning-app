@@ -1,4 +1,3 @@
-
 -- Create departments table
 CREATE TABLE public.departments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -359,3 +358,29 @@ CREATE INDEX idx_class_schedule_semester ON public.class_schedule(semester_id);
 CREATE INDEX idx_class_schedule_day_time ON public.class_schedule(day_of_week, start_time);
 CREATE INDEX idx_student_progress_student ON public.student_progress(student_id);
 CREATE INDEX idx_student_progress_subject ON public.student_progress(subject_id);
+
+-- Add new columns to faculty_profiles
+ALTER TABLE public.faculty_profiles
+  ADD COLUMN IF NOT EXISTS full_name TEXT,
+  ADD COLUMN IF NOT EXISTS email TEXT,
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS department TEXT,
+  ADD COLUMN IF NOT EXISTS phone_number TEXT,
+  ADD COLUMN IF NOT EXISTS address TEXT,
+  ADD COLUMN IF NOT EXISTS is_faculty_verified BOOLEAN DEFAULT FALSE;
+
+-- Backfill data from profiles to faculty_profiles for existing faculty
+UPDATE public.faculty_profiles fp
+SET
+  full_name = p.full_name,
+  email = p.email,
+  avatar_url = p.avatar_url,
+  created_at = p.created_at,
+  updated_at = p.updated_at,
+  department = p.department,
+  phone_number = p.phone_number,
+  address = p.address
+FROM public.profiles p
+WHERE fp.user_id = p.id AND p.role = 'faculty';

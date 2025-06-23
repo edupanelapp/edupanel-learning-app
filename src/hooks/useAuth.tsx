@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, createContext, useContext } from 'react'
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
@@ -168,6 +167,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const register = async (email: string, password: string, role: 'student' | 'faculty' | 'hod') => {
+    // Prevent HOD registration
+    if (role === 'hod') {
+      return { error: 'HOD accounts cannot be created through registration. Please contact the administrator.' }
+    }
+
     try {
       const redirectUrl = `${window.location.origin}/?redirect_to=${encodeURIComponent(`/login?role=${role}`)}`
       

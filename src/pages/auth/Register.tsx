@@ -1,5 +1,4 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useSearchParams, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Shield, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/ui/Logo"
 import { useAuth } from "@/hooks/useAuth"
@@ -27,8 +26,30 @@ export default function Register() {
   })
   const [isLoading, setIsLoading] = useState(false)
 
+  // Prevent HOD registration
+  useEffect(() => {
+    if (role === 'hod') {
+      toast({
+        title: "Access Restricted",
+        description: "HOD accounts cannot be created through registration. Please contact the administrator.",
+        variant: "destructive"
+      })
+      navigate('/admin/hod/access')
+    }
+  }, [role, navigate, toast])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Prevent HOD registration
+    if (role === 'hod') {
+      toast({
+        title: "Access Restricted",
+        description: "HOD accounts cannot be created through registration. Please contact the administrator.",
+        variant: "destructive"
+      })
+      return
+    }
     
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -78,7 +99,7 @@ export default function Register() {
     switch (role) {
       case "student": return "Student Registration - CCSA"
       case "faculty": return "Faculty Registration - CCSA" 
-      case "hod": return "HOD Registration - CCSA"
+      case "hod": return "HOD Access - Contact Administrator"
       default: return "Registration - CCSA"
     }
   }
@@ -87,9 +108,51 @@ export default function Register() {
     switch (role) {
       case "student": return "Join Centre for Computer Science & Application as a student"
       case "faculty": return "Join CCSA as faculty to teach and mentor students"
-      case "hod": return "Department head registration for CCSA"
+      case "hod": return "HOD accounts are managed by administrators only"
       default: return "Join CCSA"
     }
+  }
+
+  // Don't render the form for HOD
+  if (role === 'hod') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b">
+          <Logo />
+          <ThemeToggle />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardHeader className="space-y-4">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-red-600 to-orange-600 rounded-full flex items-center justify-center">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl">HOD Access Restricted</CardTitle>
+                <CardDescription className="mt-2">
+                  HOD accounts are created by administrators only.
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-center space-x-2 text-amber-600 text-sm">
+                <AlertTriangle className="h-4 w-4" />
+                <span>Administrative access required</span>
+              </div>
+              <Button onClick={() => navigate('/admin/hod/access')} className="w-full">
+                Go to HOD Login
+              </Button>
+              <div className="text-xs text-muted-foreground">
+                For access issues, contact the system administrator.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
