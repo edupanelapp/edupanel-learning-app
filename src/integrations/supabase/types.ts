@@ -570,6 +570,18 @@ export type Database = {
           },
         ]
       }
+      hods: {
+        Row: {
+          user_id: string
+        }
+        Insert: {
+          user_id: string
+        }
+        Update: {
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_required: boolean | null
@@ -668,6 +680,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          office_room: number | null
           phone_number: string | null
           role: string
           updated_at: string | null
@@ -680,6 +693,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          office_room?: number | null
           phone_number?: string | null
           role: string
           updated_at?: string | null
@@ -692,6 +706,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          office_room?: number | null
           phone_number?: string | null
           role?: string
           updated_at?: string | null

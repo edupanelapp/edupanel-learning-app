@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,11 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Shield, Lock, AlertTriangle } from "lucide-react"
+import { Shield, Lock, AlertTriangle, Loader2 } from "lucide-react"
+import { useHODAuth } from "@/hooks/useHODAuth"
 
 export default function HODAccess() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { hodLogin } = useHODAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -22,27 +25,95 @@ export default function HODAccess() {
     e.preventDefault()
     setIsLoading(true)
     setAttempts(0)
-    // Use Supabase Auth for HOD login
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password
-    })
-    if (error) {
+
+    try {
+      console.log('HODAccess: Attempting login with email:', formData.email)
+      
+      // First authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      })
+
+      if (authError) {
+        console.error('HODAccess: Auth error:', authError)
+        setAttempts(prev => prev + 1)
+        toast({
+          title: "Authentication Failed",
+          description: authError.message || "Please check your email and password.",
+          variant: "destructive"
+        })
+        setIsLoading(false)
+        return
+      }
+
+      console.log('HODAccess: Auth successful, checking HOD table')
+
+      // Check if user exists in hods table
+      const { data: hodData, error: hodError } = await supabase
+        .from('hods')
+        .select('user_id')
+        .eq('user_id', authData.user.id)
+        .single()
+
+      if (hodError || !hodData) {
+        console.error('HODAccess: HOD verification failed:', hodError)
+        // Sign out the user since they're not a valid HOD
+        await supabase.auth.signOut()
+        setAttempts(prev => prev + 1)
+        toast({
+          title: "Access Denied",
+          description: "You are not authorized to access the HOD panel.",
+          variant: "destructive"
+        })
+        setIsLoading(false)
+        return
+      }
+
+      console.log('HODAccess: HOD verification successful')
+
+      // Get user profile for HOD context
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      // Use the HOD auth system to set up the session
+      const hodUser = {
+        id: authData.user.id,
+        name: profileData?.full_name || "HOD User",
+        email: authData.user.email || formData.email,
+        role: 'hod' as const,
+        avatar: profileData?.avatar_url,
+        emailVerified: true,
+        profileComplete: true,
+        approvalStatus: 'approved' as const
+      }
+
+      // Store HOD session
+      localStorage.setItem('hod-session', JSON.stringify({
+        user: hodUser,
+        timestamp: Date.now()
+      }))
+
+      toast({
+        title: "Access Granted",
+        description: "Welcome to the HOD Panel!",
+      })
+
+      setIsLoading(false)
+      navigate('/hod/dashboard')
+    } catch (error: any) {
+      console.error('HODAccess: Unexpected error:', error)
       setAttempts(prev => prev + 1)
       toast({
-        title: "Invalid Credentials",
-        description: error.message || "Please check your email and password.",
+        title: "Login Failed",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       })
       setIsLoading(false)
-      return
     }
-    toast({
-      title: "Access Granted",
-      description: "Welcome, Head of Department!",
-    })
-    setIsLoading(false)
-    navigate('/hod/dashboard')
   }
 
   return (
@@ -107,7 +178,7 @@ export default function HODAccess() {
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     <span>Authenticating...</span>
                   </div>
                 ) : (
@@ -133,4 +204,4 @@ export default function HODAccess() {
       </div>
     </div>
   )
-} 
+}
