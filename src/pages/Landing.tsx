@@ -426,13 +426,7 @@ export default function Landing() {
                   </Link>
                 </li>
                 <li>
-                  <Link 
-                    to="/login?role=hod" 
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                  >
-                    <div className="h-1 w-1 rounded-full bg-primary/50" />
-                    HOD Login
-                  </Link>
+                  
                 </li>
               </ul>
             </div>
