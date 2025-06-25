@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -291,9 +290,11 @@ export default function FacultySubjects() {
                   <Eye className="h-4 w-4 mr-2" />
                   Manage
                 </Button>
+                {/* Edit button disabled - may be implemented later
                 <Button variant="outline" size="icon" className="border-primary text-primary hover:bg-primary/10">
                   <Edit className="h-4 w-4" />
                 </Button>
+                */}
               </div>
             </CardContent>
           </Card>

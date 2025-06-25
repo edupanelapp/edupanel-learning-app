@@ -11,15 +11,6 @@ interface DashboardStats {
   totalSubjects: number
   totalFaculty: number
   totalStudents: number
-  pendingApprovals: number
-}
-
-interface PendingApproval {
-  id: string
-  full_name: string
-  email: string
-  role: string
-  created_at: string
 }
 
 interface RecentActivity {
@@ -35,10 +26,8 @@ export default function HODDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalSubjects: 0,
     totalFaculty: 0,
-    totalStudents: 0,
-    pendingApprovals: 0
+    totalStudents: 0
   })
-  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -80,26 +69,13 @@ export default function HODDashboard() {
         .eq('role', 'hod')
         .eq('department', 'Centre for Computer Science & Application');
       console.log('fetchDashboardData: hodCount =', hodCount);
-      const { data: approvedFacultyIds } = await supabase
-        .from('faculty_profiles')
-        .select('user_id');
-      const approvedIds = approvedFacultyIds?.map(f => f.user_id) || [];
-      console.log('fetchDashboardData: approvedFacultyIds =', approvedFacultyIds);
-      const { data: allFaculty } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role, created_at')
-        .eq('role', 'faculty')
-        .eq('department', 'Centre for Computer Science & Application')
-        .order('created_at', { ascending: false });
-      console.log('fetchDashboardData: allFaculty =', allFaculty);
-      const pendingFaculty = allFaculty?.filter(faculty => !approvedIds.includes(faculty.id)) || [];
-      setPendingApprovals(pendingFaculty || []);
+      
       setStats({
         totalSubjects: subjectsCount || 0,
         totalFaculty: (facultyCount || 0) + (hodCount || 0),
-        totalStudents: studentsCount || 0,
-        pendingApprovals: (pendingFaculty || []).length
+        totalStudents: studentsCount || 0
       });
+      
       const { data: notifications } = await supabase
         .from('notifications')
         .select('id, title, message, created_at, type')
@@ -127,36 +103,6 @@ export default function HODDashboard() {
       console.log('fetchDashboardData: END');
     }
   };
-
-  const handleApproveFaculty = async (facultyId: string) => {
-    try {
-      // Create faculty profile to "approve" them
-      const { error } = await supabase
-        .from('faculty_profiles')
-        .insert({
-          user_id: facultyId,
-          designation: 'Assistant Professor',
-          qualification: 'To be updated',
-          specialization: 'To be updated'
-        })
-
-      if (error) throw error
-
-      toast({
-        title: "Success",
-        description: "Faculty member approved successfully",
-      })
-
-      fetchDashboardData() // Refresh data
-    } catch (error: any) {
-      console.error('Error approving faculty:', error)
-      toast({
-        title: "Error",
-        description: "Failed to approve faculty member",
-        variant: "destructive"
-      })
-    }
-  }
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -186,7 +132,6 @@ export default function HODDashboard() {
     { title: "Total Subjects", value: stats.totalSubjects.toString(), icon: BookOpen, color: "text-blue-600" },
     { title: "Faculty Members", value: stats.totalFaculty.toString(), icon: Users, color: "text-green-600" },
     { title: "Total Students", value: stats.totalStudents.toString(), icon: Users, color: "text-purple-600" },
-    { title: "Pending Approvals", value: stats.pendingApprovals.toString(), icon: UserCheck, color: "text-orange-600" },
   ]
 
   return (
@@ -196,10 +141,6 @@ export default function HODDashboard() {
           <h1 className="text-3xl font-bold text-foreground">Welcome, {hodUser?.name}! 👋</h1>
           <p className="text-muted-foreground">Overview of your department's academic activities</p>
         </div>
-        <Button onClick={() => window.location.href = '/hod/approvals'}>
-          <UserCheck className="h-4 w-4 mr-2" />
-          Review Approvals
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -218,57 +159,6 @@ export default function HODDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Approvals */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Pending Faculty Approvals
-            </CardTitle>
-            <CardDescription>Faculty members awaiting your approval</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingApprovals.length > 0 ? (
-                pendingApprovals.map((approval) => (
-                  <div key={approval.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">{approval.full_name || approval.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Applied {formatTimeAgo(approval.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => window.location.href = `/hod/approvals`}
-                      >
-                        View
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => handleApproveFaculty(approval.id)}
-                      >
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-4">No pending approvals</p>
-              )}
-            </div>
-            <Button 
-              variant="outline" 
-              className="w-full mt-4"
-              onClick={() => window.location.href = '/hod/approvals'}
-            >
-              View All Approvals
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Recent Activities */}
         <Card>
           <CardHeader>
@@ -312,7 +202,7 @@ export default function HODDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {stats.totalFaculty > 0 ? Math.round((stats.totalFaculty - stats.pendingApprovals) / stats.totalFaculty * 100) : 0}%
+                {stats.totalFaculty > 0 ? 100 : 0}%
               </div>
               <div className="text-sm text-muted-foreground">Faculty Approval Rate</div>
             </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from "@/integrations/supabase/client"
+import { clearStaleAuthData, getAuthSession, setAuthSession, validateAuthSession } from '@/utils/authUtils'
 
 interface HODUser {
   id: string
@@ -16,8 +17,9 @@ interface HODAuthContextType {
   hodUser: HODUser | null
   isHODAuthenticated: boolean
   isLoading: boolean
-  hodLogin: (email: string, password: string) => boolean
   hodLogout: () => void
+  refreshAuth: () => Promise<void>
+  clearAuth: () => void
 }
 
 const HODAuthContext = createContext<HODAuthContextType | undefined>(undefined)
@@ -25,125 +27,197 @@ const HODAuthContext = createContext<HODAuthContextType | undefined>(undefined)
 export function HODAuthProvider({ children }: { children: React.ReactNode }) {
   const [hodUser, setHODUser] = useState<HODUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Check session on mount
-  useEffect(() => {
-    const checkSession = async () => {
-      console.log('HODAuth: Checking session...')
-      try {
-        // First check localStorage for HOD session
-        const hodSession = localStorage.getItem('hod-session')
-        console.log('HODAuth: HOD Session from localStorage:', hodSession)
-        
-        if (hodSession) {
-          const { user, timestamp } = JSON.parse(hodSession)
-          const now = Date.now()
-          const sessionAge = now - timestamp
-          
-          console.log('HODAuth: Session age:', sessionAge, 'ms')
-          
-          // Session expires after 8 hours
-          if (sessionAge < 8 * 60 * 60 * 1000) {
-            console.log('HODAuth: HOD session valid, setting user:', user)
-            setHODUser(user)
-            setIsLoading(false)
-            return
-          } else {
-            console.log('HODAuth: HOD session expired, clearing')
-            localStorage.removeItem('hod-session')
-          }
-        }
+  // Function to clear all auth data
+  const clearAuthData = useCallback(() => {
+    console.log('HODAuth: Clearing all auth data')
+    clearStaleAuthData()
+    setHODUser(null)
+    setIsLoading(false)
+  }, [])
 
-        // Check if user is authenticated with Supabase and is a HOD
-        const { data: { session } } = await supabase.auth.getSession()
+  // Function to check and validate HOD session
+  const checkHODSession = useCallback(async () => {
+    console.log('HODAuth: Checking HOD session...')
+    try {
+      // First check localStorage for HOD session using utility
+      const session = getAuthSession()
+      console.log('HODAuth: HOD Session from localStorage:', session ? 'valid' : 'not found/invalid')
+      
+      if (session && session.user) {
+        console.log('HODAuth: HOD session valid, setting user:', session.user.name)
+        setHODUser(session.user)
+        setIsLoading(false)
+        return true
+      }
+
+      // Check if user is authenticated with Supabase and is a HOD
+      console.log('HODAuth: Checking Supabase session...')
+      const { data: { session: supabaseSession }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('HODAuth: Error getting Supabase session:', sessionError)
+        clearAuthData()
+        return false
+      }
+
+      console.log('HODAuth: Supabase session result:', supabaseSession ? 'exists' : 'not found')
+      
+      if (supabaseSession?.user) {
+        console.log('HODAuth: Found Supabase session, checking HOD status for user:', supabaseSession.user.id)
         
-        if (session?.user) {
-          console.log('HODAuth: Found Supabase session, checking HOD status')
+        // Check if user is in hods table
+        const { data: hodData, error: hodError } = await supabase
+          .from('hods')
+          .select('user_id')
+          .eq('user_id', supabaseSession.user.id)
+          .single()
+
+        console.log('HODAuth: HOD table check result:', { hodData, hodError })
+
+        if (!hodError && hodData) {
+          console.log('HODAuth: User is verified HOD')
           
-          // Check if user is in hods table
-          const { data: hodData, error } = await supabase
-            .from('hods')
-            .select('user_id')
-            .eq('user_id', session.user.id)
+          // Get user profile
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', supabaseSession.user.id)
             .single()
 
-          if (!error && hodData) {
-            console.log('HODAuth: User is verified HOD')
-            
-            // Get user profile
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
-
-            const hodUser: HODUser = {
-              id: session.user.id,
-              name: profileData?.full_name || "HOD User",
-              email: session.user.email || "",
-              role: 'hod',
-              avatar: profileData?.avatar_url,
-              emailVerified: true,
-              profileComplete: true,
-              approvalStatus: 'approved'
-            }
-
-            // Store session
-            localStorage.setItem('hod-session', JSON.stringify({
-              user: hodUser,
-              timestamp: Date.now()
-            }))
-
-            setHODUser(hodUser)
-          } else {
-            console.log('HODAuth: User is not a HOD or error occurred:', error)
-            setHODUser(null)
+          if (profileError) {
+            console.error('HODAuth: Error getting profile:', profileError)
+            clearAuthData()
+            return false
           }
+
+          const hodUser: HODUser = {
+            id: supabaseSession.user.id,
+            name: profileData?.full_name || "HOD User",
+            email: supabaseSession.user.email || "",
+            role: 'hod',
+            avatar: profileData?.avatar_url,
+            emailVerified: true,
+            profileComplete: true,
+            approvalStatus: 'approved'
+          }
+
+          // Store session using utility
+          setAuthSession(hodUser)
+
+          console.log('HODAuth: Setting HOD user:', hodUser.name)
+          setHODUser(hodUser)
+          setIsLoading(false)
+          return true
         } else {
-          console.log('HODAuth: No Supabase session found')
-          setHODUser(null)
+          console.log('HODAuth: User is not a HOD or error occurred:', hodError)
+          clearAuthData()
+          return false
         }
-      } catch (error) {
-        console.error('HODAuth: Error checking HOD session:', error)
-        localStorage.removeItem('hod-session')
-        setHODUser(null)
-      } finally {
-        console.log('HODAuth: Setting isLoading to false')
-        setIsLoading(false)
+      } else {
+        console.log('HODAuth: No Supabase session found')
+        clearAuthData()
+        return false
+      }
+    } catch (error) {
+      console.error('HODAuth: Error checking HOD session:', error)
+      clearAuthData()
+      return false
+    }
+  }, [clearAuthData])
+
+  // Initialize auth state
+  useEffect(() => {
+    let isMounted = true
+
+    const initializeAuth = async () => {
+      console.log('HODAuth: Initializing auth...')
+      await checkHODSession()
+      if (isMounted) {
+        setIsInitialized(true)
       }
     }
 
-    checkSession()
-  }, [])
+    initializeAuth()
 
-  const hodLogin = useCallback((email: string, password: string): boolean => {
-    // This function is now handled by the HODAccess component
-    // keeping it for compatibility but it's not used
-    console.log('HODAuth: hodLogin called but authentication is now handled by HODAccess component')
-    return false
-  }, [])
+    return () => {
+      isMounted = false
+    }
+  }, [checkHODSession])
 
+  // Listen for auth state changes
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('HODAuth: Auth state changed:', event, session?.user?.id)
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('HODAuth: User signed in, checking HOD status')
+        await checkHODSession()
+      } else if (event === 'SIGNED_OUT') {
+        console.log('HODAuth: User signed out, clearing HOD session')
+        clearAuthData()
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('HODAuth: Token refreshed, revalidating session')
+        await checkHODSession()
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [isInitialized, checkHODSession, clearAuthData])
+
+  // Listen for tab focus/visibility change to re-check session
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkHODSession();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', checkHODSession);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', checkHODSession);
+    };
+  }, [checkHODSession]);
+
+  // Refresh auth function
+  const refreshAuth = useCallback(async () => {
+    console.log('HODAuth: Refreshing auth...')
+    setIsLoading(true)
+    await checkHODSession()
+  }, [checkHODSession])
+
+  // Clear auth function (for manual cleanup)
+  const clearAuth = useCallback(() => {
+    console.log('HODAuth: Manual auth clear requested')
+    clearAuthData()
+  }, [clearAuthData])
+
+  // Logout function
   const hodLogout = useCallback(async () => {
     try {
+      console.log('HODAuth: Logging out...')
       // Sign out from Supabase
       await supabase.auth.signOut()
-      
       // Clear HOD session
-      localStorage.removeItem('hod-session')
-      setHODUser(null)
-      
+      clearAuthData()
       console.log('HODAuth: Successfully logged out')
     } catch (error) {
       console.error('HODAuth: Error during logout:', error)
+      clearAuthData()
     }
-  }, [])
+  }, [clearAuthData])
 
   const value = {
     hodUser,
     isHODAuthenticated: !!hodUser,
-    isLoading,
-    hodLogin,
-    hodLogout
+    isLoading: isLoading || !isInitialized,
+    hodLogout,
+    refreshAuth,
+    clearAuth
   }
 
   return <HODAuthContext.Provider value={value}>{children}</HODAuthContext.Provider>
@@ -152,7 +226,7 @@ export function HODAuthProvider({ children }: { children: React.ReactNode }) {
 export function useHODAuth() {
   const context = useContext(HODAuthContext)
   if (context === undefined) {
-    throw new Error('useHODAuth must be used within an HODAuthProvider')
+    throw new Error('useHODAuth must be used within a HODAuthProvider')
   }
   return context
 }

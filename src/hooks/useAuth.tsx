@@ -160,9 +160,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted) setLoading(false)
     })
 
+    // Listen for tab focus/visibility change to re-check session
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setSession(session);
+          if (session?.user) {
+            createUserProfile(session.user)
+              .then(profile => setUser(profile))
+              .catch(() => setUser(null));
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
+        });
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
     return () => {
       mounted = false
       subscription.unsubscribe()
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
     }
   }, [])
 

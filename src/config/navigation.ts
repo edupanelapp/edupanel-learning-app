@@ -7,8 +7,7 @@ import {
   Users, 
   UserCheck, 
   Megaphone,
-  Calendar,
-  BarChart
+  Calendar
 } from "lucide-react"
 
 export type NavigationItem = {
@@ -81,6 +80,18 @@ export const navigationConfig = {
       href: "/faculty/schedule",
       icon: Calendar,
       description: "Manage your teaching schedule"
+    },
+    {
+      name: "Students",
+      href: "/faculty/students",
+      icon: Users,
+      description: "Manage students of your subject"
+    },
+    {
+      name: "Approvals",
+      href: "/faculty/approvals",
+      icon: Calendar,
+      description: "Manage your students approvals"
     }
   ],
   hod: [
@@ -119,12 +130,6 @@ export const navigationConfig = {
       href: "/hod/announcements", 
       icon: Megaphone,
       description: "Create department announcements"
-    },
-    {
-      name: "Reports",
-      href: "/hod/reports",
-      icon: BarChart,
-      description: "View department analytics"
     }
   ]
 }
@@ -153,12 +158,6 @@ export const userMenuItems = {
     }
   ],
   hod: [
-    {
-      name: "Reports",
-      href: "/hod/reports",
-      icon: BarChart,
-      description: "View department analytics"
-    },
     {
       name: "Schedule",
       href: "/hod/schedule",

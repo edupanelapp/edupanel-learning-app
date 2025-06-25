@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -108,27 +107,86 @@ export default function FacultyDashboard() {
       const { data: classesData } = await supabase
         .from('class_schedule')
         .select(`
+          id,
           start_time,
-          subjects:subject_id (name)
+          subjects:subject_id (name, id)
         `)
         .eq('faculty_id', user.id)
         .eq('day_of_week', today)
         .eq('is_active', true)
 
-      const todayClasses = classesData?.map(cls => ({
-        subject: cls.subjects?.name || 'Unknown',
-        time: cls.start_time,
-        students: 0 // This would need additional query
-      })) || []
-
+      // For each class, fetch student count
+      const todayClasses = await Promise.all((classesData || []).map(async (cls: any) => {
+        let students = 0
+        if (cls.subjects?.id) {
+          const { count } = await supabase
+            .from('student_subjects')
+            .select('*', { count: 'exact', head: true })
+            .eq('subject_id', cls.subjects.id)
+          students = count || 0
+        }
+        return {
+          subject: cls.subjects?.name || 'Unknown',
+          time: cls.start_time,
+          students
+        }
+      }))
       setUpcomingClasses(todayClasses)
 
-      // Mock recent activities (in real app, this would come from activity log)
-      setRecentActivities([
-        { type: "assignment", title: "Data Structures Assignment", time: "2 hours ago", status: "pending" },
-        { type: "submission", title: "Student Project Submission", time: "4 hours ago", status: "review" },
-        { type: "material", title: "Added new chapter content", time: "1 day ago", status: "completed" },
-      ])
+      // Fetch recent activities from assignment_updates, notifications, and project_ideas
+      // 1. Assignment updates (submissions, reviews, grades)
+      const { data: assignmentUpdates } = await supabase
+        .from('assignment_updates')
+        .select('update_type, status, created_at, assignment_id, updated_by')
+        .order('created_at', { ascending: false })
+        .limit(5)
+        .eq('updated_by', user.id)
+
+      // 2. Notifications sent by this faculty
+      const { data: notifications } = await supabase
+        .from('notifications')
+        .select('title, message, created_at, type')
+        .order('created_at', { ascending: false })
+        .limit(5)
+        .eq('sender_id', user.id)
+
+      // 3. Project ideas created by this faculty
+      const { data: projectIdeas } = await supabase
+        .from('project_ideas')
+        .select('title, created_at, status')
+        .order('created_at', { ascending: false })
+        .limit(5)
+        .eq('created_by', user.id)
+
+      // Combine and normalize activities
+      const activities: Activity[] = []
+      if (assignmentUpdates) {
+        activities.push(...assignmentUpdates.map((a: any) => ({
+          type: 'assignment',
+          title: `Assignment ${a.update_type}`,
+          time: new Date(a.created_at).toLocaleString(),
+          status: a.status || 'pending'
+        })))
+      }
+      if (notifications) {
+        activities.push(...notifications.map((n: any) => ({
+          type: n.type || 'notification',
+          title: n.title,
+          time: new Date(n.created_at).toLocaleString(),
+          status: 'sent'
+        })))
+      }
+      if (projectIdeas) {
+        activities.push(...projectIdeas.map((p: any) => ({
+          type: 'project',
+          title: p.title,
+          time: new Date(p.created_at).toLocaleString(),
+          status: p.status || 'draft'
+        })))
+      }
+      // Sort by time descending and take top 5
+      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      setRecentActivities(activities.slice(0, 5))
 
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error)
@@ -244,15 +302,15 @@ export default function FacultyDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary">Welcome back, {user?.name}! 👋</h1>
           <p className="text-muted-foreground">Here's what's happening in your classes at CCSA today.</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Dialog open={showCreateAssignment} onOpenChange={setShowCreateAssignment}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
+              <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Assignment
               </Button>
@@ -324,7 +382,7 @@ export default function FacultyDashboard() {
 
           <Dialog open={showCreateNotification} onOpenChange={setShowCreateNotification}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Send Notice
               </Button>

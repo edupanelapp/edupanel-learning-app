@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,8 @@ import { HODAuthProvider } from "@/hooks/useHODAuth";
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { FacultyLayout } from "@/components/layout/FacultyLayout";
 import { ProtectedHODLayout } from "@/components/layout/ProtectedHODLayout";
+import { useHODAuth } from "@/hooks/useHODAuth";
+import { clearStaleAuthData } from "@/utils/authUtils";
 
 // Pages
 import Landing from "./pages/Landing";
@@ -25,7 +28,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
 // Admin Pages
-import HODAccess from "./pages/admin/HODAccess";
+import HODLogin from "./pages/admin/HODLogin";
+import TestData from "./pages/admin/TestData";
 
 // Student Pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -35,10 +39,13 @@ import StudentProjects from "./pages/student/StudentProjects";
 import StudentProgress from "./pages/student/StudentProgress";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentSchedule from "./pages/student/StudentSchedule";
+import StudentSubjectContent from "./pages/student/StudentSubjectContent";
+import StudentUnitLearning from "./pages/student/StudentUnitLearning";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/FacultyDashboard";
 import FacultySubjects from "./pages/faculty/FacultySubjects";
+import ManageSubject from "./pages/faculty/ManageSubject";
 import FacultyAssignments from "./pages/faculty/FacultyAssignments";
 import FacultyProjects from "./pages/faculty/FacultyProjects";
 import FacultyStudents from "./pages/faculty/FacultyStudents";
@@ -61,6 +68,45 @@ import Verifications from "./pages/admin/Verifications";
 
 const queryClient = new QueryClient();
 
+// Component to handle authentication cleanup
+function AuthCleanupHandler() {
+  const { clearAuth } = useHODAuth();
+
+  useEffect(() => {
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('App: Page hidden, clearing stale auth data')
+        clearStaleAuthData()
+      }
+    };
+
+    // Handle beforeunload (page refresh/close)
+    const handleBeforeUnload = () => {
+      console.log('App: Page unloading, clearing auth data')
+      clearStaleAuthData()
+    };
+
+    // Handle focus events (when user returns to tab)
+    const handleFocus = () => {
+      console.log('App: Page focused, checking auth state')
+      // This will trigger a re-check of authentication
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [clearAuth]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider
@@ -70,11 +116,10 @@ const App = () => (
       disableTransitionOnChange
     >
       <AuthProvider>
-        <HODAuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<About />} />
@@ -88,11 +133,10 @@ const App = () => (
               <Route path="/email-verification" element={<EmailVerification />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               <Route path="/pending-approval" element={<PendingApproval />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin/hod/access" element={<HODAccess />} />
+              {/* Admin Routes */}
               <Route path="/admin/verifications" element={<Verifications />} />
-              
+              <Route path="/admin/hod/login" element={<HODLogin />} />
+              <Route path="/admin/test-data" element={<TestData />} />
               {/* Student Routes */}
               <Route path="/student" element={<StudentLayout />}>
                 <Route path="dashboard" element={<StudentDashboard />} />
@@ -102,12 +146,14 @@ const App = () => (
                 <Route path="projects" element={<StudentProjects />} />
                 <Route path="progress" element={<StudentProgress />} />
                 <Route path="profile" element={<StudentProfile />} />
+                <Route path="subjects/:subjectId" element={<StudentSubjectContent />} />
+                <Route path="subjects/:subjectId/chapters/:chapterId/topics/:topicId" element={<StudentUnitLearning />} />
               </Route>
-
               {/* Faculty Routes */}
               <Route path="/faculty" element={<FacultyLayout />}>
                 <Route path="dashboard" element={<FacultyDashboard />} />
                 <Route path="subjects" element={<FacultySubjects />} />
+                <Route path="subjects/:subjectId" element={<ManageSubject />} />
                 <Route path="assignments" element={<FacultyAssignments />} />
                 <Route path="projects" element={<FacultyProjects />} />
                 <Route path="students" element={<FacultyStudents />} />
@@ -116,26 +162,17 @@ const App = () => (
                 <Route path="schedule" element={<FacultySchedule />} />
                 <Route path="verifications" element={<Verifications />} />
               </Route>
-
-                {/* Protected HOD Routes */}
-                <Route path="/hod" element={<ProtectedHODLayout />}>
-                <Route path="dashboard" element={<HODDashboard />} />
-                <Route path="approvals" element={<HODApprovals />} />
-                <Route path="subjects" element={<HODSubjects />} />
-                <Route path="faculty" element={<HODFaculty />} />
-                <Route path="students" element={<HODStudents />} />
-                <Route path="announcements" element={<HODAnnouncements />} />
-                <Route path="profile" element={<HODProfile />} />
-                <Route path="reports" element={<Reports />} />
-                <Route path="verifications" element={<Verifications />} />
-              </Route>
-              
+              {/* Protected HOD Routes - Only these are wrapped in HODAuthProvider */}
+              <Route path="/hod/*" element={
+                <HODAuthProvider>
+                  <ProtectedHODLayout />
+                </HODAuthProvider>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </HODAuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

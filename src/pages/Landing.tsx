@@ -6,6 +6,31 @@ import { BookOpen, Users, Award, Presentation, FileText, Lightbulb, Shield, Arro
 import { useState, useEffect } from "react"
 import { Logo } from "@/components/ui/Logo"
 
+const quotes = [
+  "Education is the most powerful weapon which you can use to change the world. – Nelson Mandela",
+  "The beautiful thing about learning is that no one can take it away from you. – B.B. King",
+  "The purpose of education is to replace an empty mind with an open one. – Malcolm Forbes",
+  "Learning never exhausts the mind. – Leonardo da Vinci"
+]
+
+function EducationalQuotes() {
+  const [index, setIndex] = useState(0)
+
+  // Rotate quotes every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % quotes.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="min-h-[48px] flex items-center justify-center transition-all duration-700 animate-fade-in">
+      <span className="text-base italic text-muted-foreground text-center">{quotes[index]}</span>
+    </div>
+  )
+}
+
 export default function Landing() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
@@ -152,9 +177,8 @@ export default function Landing() {
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <div className="h-2 w-3/4 bg-primary/10 rounded-full animate-pulse" />
-                    <div className="h-2 w-full bg-primary/10 rounded-full animate-pulse delay-150" />
-                    <div className="h-2 w-2/3 bg-primary/10 rounded-full animate-pulse delay-300" />
+                    {/* Educational Quotes Section */}
+                    <EducationalQuotes />
                   </div>
                   <div className="mt-6 flex items-center gap-2">
                     <div className="flex -space-x-2">

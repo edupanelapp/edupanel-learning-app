@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/hooks/useAuth"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { useAIChatContext } from "@/components/chat/AIChatContext"
 
 interface SubjectProgress {
   id: string
@@ -47,6 +48,7 @@ interface Notification {
 
 export default function StudentDashboard() {
   const { user } = useAuth()
+  const { setContext } = useAIChatContext()
   const { toast } = useToast()
   const [subjects, setSubjects] = useState<SubjectProgress[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -57,8 +59,10 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (user) {
       fetchDashboardData()
+      // Set general dashboard context for AI chat
+      setContext('Student Dashboard', 'General Academic Support')
     }
-  }, [user])
+  }, [user, setContext])
 
   const fetchDashboardData = async () => {
     if (!user) return

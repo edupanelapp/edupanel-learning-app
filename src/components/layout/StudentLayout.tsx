@@ -1,7 +1,8 @@
-
 import { BaseLayout } from "./BaseLayout"
 import { navigationConfig } from "@/config/navigation"
 import { useAuth } from "@/hooks/useAuth"
+import { StudentAIChatButton } from "@/components/chat/StudentAIChatButton"
+import { AIChatProvider } from "@/components/chat/AIChatContext"
 
 export function StudentLayout() {
   const { user, logout } = useAuth()
@@ -24,11 +25,14 @@ export function StudentLayout() {
   }
 
   return (
-    <BaseLayout
-      navigation={navigationConfig.student}
-      userRole="student"
-      userInfo={userInfo}
-      onLogout={handleLogout}
-    />
+    <AIChatProvider>
+      <BaseLayout
+        navigation={navigationConfig.student}
+        userRole="student"
+        userInfo={userInfo}
+        onLogout={handleLogout}
+      />
+      <StudentAIChatButton />
+    </AIChatProvider>
   )
 }

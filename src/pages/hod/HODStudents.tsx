@@ -1,163 +1,45 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Download, TrendingUp, TrendingDown, Users, Loader2 } from "lucide-react"
+import { Search, TrendingUp, TrendingDown, Users, Loader2, Eye } from "lucide-react"
 import { useHODAuth } from "@/hooks/useHODAuth"
+import { useHODStudents, type HODStudent, type SemesterStats, type DepartmentStats } from "@/hooks/useHODStudents"
 import { useToast } from "@/hooks/use-toast"
-
-interface Student {
-  id: string
-  name: string
-  rollNo: string
-  course: string
-  semester: number
-  progress: number
-  assignments: { completed: number; total: number }
-  projects: number
-  gpa: number
-  trend: "up" | "down"
-}
-
-interface SemesterStats {
-  [key: string]: { count: number; avgProgress: number }
-}
-
-// Mock data for students
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    rollNo: "CSE2024001",
-    course: "Computer Science",
-    semester: 3,
-    progress: 85,
-    assignments: { completed: 8, total: 10 },
-    projects: 3,
-    gpa: 3.8,
-    trend: "up"
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    rollNo: "CSE2024002",
-    course: "Computer Science",
-    semester: 3,
-    progress: 92,
-    assignments: { completed: 10, total: 10 },
-    projects: 4,
-    gpa: 4.0,
-    trend: "up"
-  },
-  {
-    id: "3",
-    name: "Mike Johnson",
-    rollNo: "CSE2024003",
-    course: "Computer Science",
-    semester: 5,
-    progress: 78,
-    assignments: { completed: 6, total: 8 },
-    projects: 2,
-    gpa: 3.5,
-    trend: "down"
-  },
-  {
-    id: "4",
-    name: "Sarah Wilson",
-    rollNo: "CSE2024004",
-    course: "Computer Science",
-    semester: 5,
-    progress: 88,
-    assignments: { completed: 7, total: 8 },
-    projects: 3,
-    gpa: 3.9,
-    trend: "up"
-  },
-  {
-    id: "5",
-    name: "Alex Brown",
-    rollNo: "CSE2024005",
-    course: "Computer Science",
-    semester: 1,
-    progress: 65,
-    assignments: { completed: 4, total: 6 },
-    projects: 1,
-    gpa: 3.2,
-    trend: "up"
-  },
-  {
-    id: "6",
-    name: "Emily Davis",
-    rollNo: "CSE2024006",
-    course: "Computer Science",
-    semester: 1,
-    progress: 72,
-    assignments: { completed: 5, total: 6 },
-    projects: 2,
-    gpa: 3.6,
-    trend: "up"
-  }
-]
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export default function HODStudents() {
   console.log('HODStudents component rendering...')
   
   const { hodUser, isLoading, isHODAuthenticated } = useHODAuth()
   const { toast } = useToast()
-  const [students, setStudents] = useState<Student[]>([])
-  const [semesterStats, setSemesterStats] = useState<SemesterStats>({})
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterSemester, setFilterSemester] = useState("")
+  const [selectedStudent, setSelectedStudent] = useState<HODStudent | null>(null)
+
+  // Use the new backend hook
+  const { 
+    data: studentData, 
+    isLoading: studentsLoading, 
+    error: studentsError,
+    refetch: refetchStudents
+  } = useHODStudents()
+
+  const students = studentData?.students || []
+  const semesterStats = studentData?.semesterStats || {}
+  const departmentStats = studentData?.departmentStats
 
   console.log('HODStudents auth state:', { hodUser, isLoading, isHODAuthenticated })
-
-  useEffect(() => {
-    console.log('HODStudents useEffect triggered, hodUser:', hodUser, 'isLoading:', isLoading, 'isHODAuthenticated:', isHODAuthenticated)
-    
-    // If authentication is complete, load mock data immediately
-    if (isHODAuthenticated && !isLoading) {
-      console.log('Authentication complete, loading mock data immediately')
-      loadMockData()
-    }
-  }, [isHODAuthenticated, isLoading])
-
-  const loadMockData = () => {
-    console.log('Loading mock student data...')
-    setLoading(true)
-    
-    // Load data immediately without delay
-    setStudents(mockStudents)
-    
-    // Calculate semester statistics
-    const semesterData: SemesterStats = {}
-    mockStudents.forEach(student => {
-      const semesterKey = `${student.semester}`
-      if (!semesterData[semesterKey]) {
-        semesterData[semesterKey] = { count: 0, avgProgress: 0 }
-      }
-      semesterData[semesterKey].count++
-      semesterData[semesterKey].avgProgress += student.progress
-    })
-
-    // Calculate averages
-    Object.keys(semesterData).forEach(semester => {
-      semesterData[semester].avgProgress = Math.round(
-        semesterData[semester].avgProgress / semesterData[semester].count
-      )
-    })
-
-    setSemesterStats(semesterData)
-    setLoading(false)
-    console.log('Mock data loaded successfully')
-  }
+  console.log('HODStudents data:', { students: students.length, semesterStats, departmentStats })
+  console.log('HODStudents loading states:', { isLoading, studentsLoading, studentsError })
 
   // Filter students based on search and filters
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
+                         student.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesSemester = !filterSemester || student.semester.toString() === filterSemester
 
     return matchesSearch && matchesSemester
@@ -165,8 +47,27 @@ export default function HODStudents() {
 
   const uniqueSemesters = [...new Set(students.map(s => s.semester.toString()))].sort()
 
-  if (loading || isLoading) {
-    console.log('HODStudents: Showing loading screen', { loading, isLoading, isHODAuthenticated, hodUser })
+  if (studentsError) {
+    console.error('Error loading students:', studentsError)
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Error Loading Data</h2>
+            <p className="text-muted-foreground mb-4">Failed to load student data. Please try again.</p>
+            <div className="space-y-2">
+              <Button onClick={() => refetchStudents()} variant="outline">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading || studentsLoading) {
+    console.log('HODStudents: Showing loading screen', { isLoading, studentsLoading, isHODAuthenticated, hodUser })
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center min-h-[200px]">
@@ -195,16 +96,12 @@ export default function HODStudents() {
 
   return (
     <div className="space-y-6">
-      {(() => { console.log('HODStudents: Rendering main content', { students: students.length, isHODAuthenticated, loading, isLoading }); return null; })()}
+      {(() => { console.log('HODStudents: Rendering main content', { students: students.length, isHODAuthenticated, isLoading, studentsLoading }); return null; })()}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Student Overview</h1>
           <p className="text-muted-foreground">Monitor student progress across all semesters</p>
         </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </div>
 
       {/* Stats and Search */}
@@ -219,7 +116,7 @@ export default function HODStudents() {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Search by name, roll number, or course..." 
+                    placeholder="Search by name, roll number, or email..." 
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -245,7 +142,7 @@ export default function HODStudents() {
             <CardTitle className="text-sm font-medium">Total Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{students.length}</div>
+            <div className="text-2xl font-bold">{departmentStats?.totalStudents || 0}</div>
           </CardContent>
         </Card>
 
@@ -255,9 +152,7 @@ export default function HODStudents() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {students.length > 0 
-                ? Math.round(students.reduce((sum, s) => sum + s.progress, 0) / students.length)
-                : 0}%
+              {departmentStats?.avgProgress || 0}%
             </div>
           </CardContent>
         </Card>
@@ -280,9 +175,15 @@ export default function HODStudents() {
                   </div>
                   <Users className="h-8 w-8 text-primary" />
                 </div>
-                <div className="mt-2">
-                  <div className="text-sm text-muted-foreground">Avg Progress</div>
-                  <div className="text-xl font-bold">{stats.avgProgress}%</div>
+                <div className="mt-2 space-y-1">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Avg Progress</div>
+                    <div className="text-xl font-bold">{stats.avgProgress}%</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Avg GPA</div>
+                    <div className="text-lg font-semibold">{stats.avgGPA}</div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -309,6 +210,7 @@ export default function HODStudents() {
                     <p className="text-sm text-muted-foreground">
                       {student.rollNo} • {student.course} {student.semester} Semester
                     </p>
+                    <p className="text-xs text-muted-foreground">{student.email}</p>
                   </div>
                 </div>
 
@@ -336,9 +238,79 @@ export default function HODStudents() {
                     <div className="text-xs text-muted-foreground">GPA</div>
                   </div>
 
-                  <Button variant="outline" size="sm">
-                    View Details
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View Details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Student Details - {student.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold">Personal Information</h4>
+                            <div className="space-y-2 text-sm">
+                              <div><strong>Roll No:</strong> {student.rollNo}</div>
+                              <div><strong>Email:</strong> {student.email}</div>
+                              <div><strong>Batch:</strong> {student.batch}</div>
+                              <div><strong>Department:</strong> {student.department}</div>
+                              <div><strong>Course:</strong> {student.course}</div>
+                              <div><strong>Semester:</strong> {student.semester}</div>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">Guardian Information</h4>
+                            <div className="space-y-2 text-sm">
+                              <div><strong>Name:</strong> {student.guardian_name || 'Not provided'}</div>
+                              <div><strong>Phone:</strong> {student.guardian_phone || 'Not provided'}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">Academic Performance</h4>
+                          <div className="grid grid-cols-3 gap-4 mt-2">
+                            <div className="text-center p-3 bg-muted rounded">
+                              <div className="text-2xl font-bold">{student.progress}%</div>
+                              <div className="text-xs text-muted-foreground">Progress</div>
+                            </div>
+                            <div className="text-center p-3 bg-muted rounded">
+                              <div className="text-2xl font-bold">{student.gpa}</div>
+                              <div className="text-xs text-muted-foreground">GPA</div>
+                            </div>
+                            <div className="text-center p-3 bg-muted rounded">
+                              <div className="text-2xl font-bold">{student.projects}</div>
+                              <div className="text-xs text-muted-foreground">Projects</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">Assignment Status</h4>
+                          <div className="mt-2">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span>Completed: {student.assignments.completed}</span>
+                              <span>Total: {student.assignments.total}</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2">
+                              <div 
+                                className="bg-primary h-2 rounded-full transition-all" 
+                                style={{ 
+                                  width: `${student.assignments.total > 0 ? (student.assignments.completed / student.assignments.total) * 100 : 0}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
 
@@ -370,32 +342,25 @@ export default function HODStudents() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {students.length > 0 
-                  ? Math.round(students.reduce((sum, s) => sum + s.assignments.completed, 0) / 
-                              students.reduce((sum, s) => sum + s.assignments.total, 0) * 100)
-                  : 0}%
+                {departmentStats?.assignmentCompletionRate || 0}%
               </div>
               <div className="text-sm text-muted-foreground">Assignment Completion Rate</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {students.length > 0 
-                  ? Math.round(students.reduce((sum, s) => sum + s.gpa, 0) / students.length * 10) / 10
-                  : 0}
+                {departmentStats?.avgGPA || 0}
               </div>
               <div className="text-sm text-muted-foreground">Average GPA</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {students.reduce((sum, s) => sum + s.projects, 0)}
+                {departmentStats?.activeProjects || 0}
               </div>
               <div className="text-sm text-muted-foreground">Active Projects</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {students.length > 0 
-                  ? Math.round(students.filter(s => s.trend === 'up').length / students.length * 100)
-                  : 0}%
+                {departmentStats?.improvingStudents || 0}
               </div>
               <div className="text-sm text-muted-foreground">Improving Students</div>
             </div>
@@ -408,7 +373,7 @@ export default function HODStudents() {
           <CardContent>
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No students found</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               {students.length === 0 
                 ? "Students will appear here once they enroll in courses"
                 : "No students match your search criteria"

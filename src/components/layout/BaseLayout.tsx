@@ -9,6 +9,7 @@ import { UserMenu } from "@/components/navigation/UserMenu"
 import { useToast } from "@/components/ui/use-toast"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface BaseLayoutProps {
   navigation: NavigationItem[]
@@ -34,6 +35,13 @@ export function BaseLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const isActive = (href: string) => location.pathname === href
   const isProfilePage = location.pathname === `/${userRole}/profile`
+  const isMobile = useMediaQuery("(max-width: 768px)")
+
+  // Detect if on a student subject content or learning page
+  const isStudentSubjectContentPage =
+    userRole === 'student' &&
+    (/^\/student\/subjects\/[^/]+$/.test(location.pathname) ||
+      /^\/student\/subjects\/[^/]+\/chapters\/[^/]+\/topics\/[^/]+$/.test(location.pathname));
 
   const handleLogout = () => {
     try {
@@ -69,15 +77,15 @@ export function BaseLayout({
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              {isProfilePage ? (
+              {(isProfilePage || isStudentSubjectContentPage) ? (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="gap-2"
-                  onClick={() => navigate(`/${userRole}/dashboard`)}
+                  onClick={() => navigate(-1)}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back to Dashboard
+                  Back
                 </Button>
               ) : (
                 <Link to={`/${userRole}/dashboard`} className="flex items-center space-x-2 cursor-pointer">
@@ -109,6 +117,7 @@ export function BaseLayout({
                 profileUrl={`/${userRole}/profile`}
                 onLogout={handleLogout}
                 userRole={userRole}
+                sidebarActive={isMobile ? false : !isProfilePage}
               />
             </div>
           </div>
@@ -118,7 +127,7 @@ export function BaseLayout({
       {/* Main Content Area with Sidebar */}
       <div className="flex">
         {/* Desktop Sidebar */}
-        {!isProfilePage && (
+        {!isProfilePage && !isStudentSubjectContentPage && (
           <div className="hidden md:block">
             <Sidebar 
               items={navigation} 
@@ -132,7 +141,7 @@ export function BaseLayout({
         {/* Main Content */}
         <div className={cn(
           "flex-1 transition-all duration-300",
-          !isProfilePage && (isSidebarCollapsed ? "md:ml-[54px]" : "md:ml-[218px]")
+          !isProfilePage && !isStudentSubjectContentPage && (isSidebarCollapsed ? "md:ml-[54px]" : "md:ml-[218px]")
         )}>
           <main className="container mx-auto px-4 py-6 pb-24 md:pb-6">
             <Outlet />
@@ -141,7 +150,7 @@ export function BaseLayout({
       </div>
 
       {/* Mobile Bottom Navigation */}
-      {!isProfilePage && <BottomNav items={navigation} isActive={isActive} userRole={userRole} />}
+      {!isProfilePage && !isStudentSubjectContentPage && <BottomNav items={navigation} isActive={isActive} userRole={userRole} />}
     </div>
   )
 }
